@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/danilomendesdias/llckbdm.svg?token=k6Bj4q2Uy7XrcNrLebfL&branch=master)](https://travis-ci.com/danilomendesdias/llckbdm)
+
 ### Line List Clustering Krylov Basis Diagonalization Method
 Core methods of Line List Clustering Krylov Basis Diagonalization Method written in Python 3.6.
 
