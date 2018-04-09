@@ -4,7 +4,7 @@
 ## Line List Clustering Krylov Basis Diagonalization Method
 Core methods of Line List Clustering Krylov Basis Diagonalization Method written in Python 3.6.
 
-### Instalation
+#### Instalation
 
 1. Make sure you have git, pip, virtualenv and Python 3.6 installed.
 
