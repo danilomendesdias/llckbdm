@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import svd, eig, eigh, eig_banded, eigvalsh
+from scipy.linalg import svd, eig
 
 
 def _compute_U_matrices(data, m, p):
@@ -111,7 +111,7 @@ def _solve_gep(U0, Up_1, Up):
     return μ, B_norm
 
 
-def kbdm(data, dwell, method='svd', **kwargs):
+def kbdm(data, dwell, gep_solver='svd', **kwargs):
     """
     :param numpy.ndarray data:
         Input Data
@@ -130,7 +130,9 @@ def kbdm(data, dwell, method='svd', **kwargs):
 
     U0, Up_1, Up = _compute_U_matrices(data=data, m=m, p=p)
 
-    if method == 'svd':
+    assert gep_solver in ['svd', 'scipy'], "GEP solver can be 'svd' or 'scipy'"
+
+    if gep_solver == 'svd':
         μ, B_norm = _solve_gep_svd(U0=U0, Up_1=Up_1, Up=Up, **kwargs)
     else:
         μ, B_norm = _solve_gep(U0=U0, Up_1=Up_1, Up=Up)

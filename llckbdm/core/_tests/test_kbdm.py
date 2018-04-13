@@ -51,7 +51,7 @@ def test_kbdm(data_brain_sim, dwell, df_params_brain_sim, columns):
             data_brain_sim,
             dwell,
             m=m,
-            method='numpy'
+            gep_solver='scipy'
         )
     )
 
@@ -88,7 +88,7 @@ def test_kbdm_svd(data_brain_sim, dwell, df_params_brain_sim, columns):
             data_brain_sim,
             dwell,
             m=m,
-            method='svd',
+            gep_solver='svd',
         )
     )
 
