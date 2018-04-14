@@ -115,7 +115,6 @@ def test_kbdm_svd(data_brain_sim, dwell, df_params_brain_sim, columns):
             f'Phase does not match at peak #{i}'
 
 
-
 def test_compute_U_matrices(data_brain_sim):
     m = 1000
     p = 11
@@ -131,3 +130,44 @@ def test_compute_U_matrices(data_brain_sim):
     assert U0[m - 1, :m] == pytest.approx(data_brain_sim[m - 1:2 * m - 1])
     assert Up_1[m - 1, :m] == pytest.approx(data_brain_sim[m + p - 2:2 * m + p - 2])
     assert Up[m - 1, :m] == pytest.approx(data_brain_sim[m + p - 1:2 * m + p - 1])
+
+
+def test_kbdm_l_gt_m_should_raise_value_error(data_brain_sim, dwell):
+    with pytest.raises(ValueError) as e_info:
+        kbdm(data=data_brain_sim, dwell=dwell, l=30, m=20)
+
+    assert "l can't be greater than m" in str(e_info.value)
+
+
+def test_kbdm_invalid_m_n_p_constraint_should_raise_value_error(data_brain_sim, dwell):
+    with pytest.raises(ValueError) as e_info:
+        kbdm(data=data_brain_sim, dwell=dwell, m=len(data_brain_sim)/2 + 1, p=1)
+
+    assert "m can't be greater than (n + 1 - p)/2" in str(e_info.value)
+
+
+def test_kbdm_invalid_gep_solver_should_raise_value_error(data_brain_sim, dwell):
+    with pytest.raises(ValueError) as e_info:
+        kbdm(data=data_brain_sim, dwell=dwell, gep_solver='invalid')
+
+    assert "GEP solver can be 'svd' or 'scipy'" in str(e_info.value)
+
+
+def test_kbdm_svd_with_q_greater_than_zero_should_use_tikhonov_regularization(data_brain_sim, dwell, caplog):
+    caplog.set_level('DEBUG')
+
+    m = 100
+
+    params_est = np.column_stack(
+        kbdm(
+            data_brain_sim,
+            dwell,
+            m=m,
+            q=1e-3,
+            gep_solver='svd'
+        )
+    )
+
+    assert 'Using Tikhonov Regularization' in caplog.text
+
+    assert len(params_est) == m
