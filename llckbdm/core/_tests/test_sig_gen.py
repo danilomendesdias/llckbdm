@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from core.sig_gen import fid, multi_fid, gen_t_freq_arrays, lorentzian_peak, spec, _validate_parameters
+from llckbdm.core.sig_gen import fid, multi_fid, gen_t_freq_arrays, lorentzian_peak, spec, _validate_parameters
 
 
 @pytest.fixture
