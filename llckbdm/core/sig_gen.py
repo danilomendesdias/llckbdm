@@ -5,7 +5,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def gen_t_freq(N, dwell):
+def gen_t_freq_arrays(N, dwell):
     """
     Generate time and frequencies array for a given number of points and dwell time.
 
@@ -18,10 +18,10 @@ def gen_t_freq(N, dwell):
     :return: Time array and shifted array of frequencies.
     :rtype: tuple(numpy.ndarray, numpy.ndarray)
     """
-    t = np.arange(0, N * dwell, dwell)
-    freq = np.fft.fftshift(np.fft.fftfreq(N, dwell))
+    t_array = np.arange(0, N * dwell, dwell)
+    freq_array = np.fft.fftshift(np.fft.fftfreq(N, dwell))
 
-    return t, freq
+    return t_array, freq_array
 
 
 def fid(t_array, a, t2, f, phase=0.):
