@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 def main():
     setup(
         name='llckbdm',  
-        version='0.0.1',  
+        version='0.0.1rc3',
         description='Krylov Basis Diagonalization Method implementation in Python', 
         long_description=long_description,  
         long_description_content_type='text/markdown',
@@ -28,7 +28,9 @@ def main():
             'Programming Language :: Python :: 3.6',
         ],
         keywords='kbdm mrs fitting hip',  
-        packages=find_packages(exclude=['contrib', 'docs']),  
+        packages=find_packages(exclude=['contrib', 'docs']),
+        license='MIT',
+        python_requires='>=3.6',
 
         install_requires=['numpy', 'scipy', 'pandas'],
         test_requires=['pytest'],
