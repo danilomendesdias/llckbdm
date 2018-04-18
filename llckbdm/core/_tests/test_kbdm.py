@@ -29,7 +29,7 @@ def columns():
 @pytest.fixture
 def df_params_brain_sim(data_path, columns):
     df = pd.read_csv(
-        f'{data_path}/brain_simulated_1_5T/params.csv',
+        f'{data_path}/params_brain_sim_1_5T.csv',
         names=columns
     )
     df = df.sort_values(['frequency'])
