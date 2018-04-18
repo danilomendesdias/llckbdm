@@ -1,10 +1,26 @@
 [![Build Status](https://travis-ci.com/danilomendesdias/llckbdm.svg?token=k6Bj4q2Uy7XrcNrLebfL&branch=master)](https://travis-ci.com/danilomendesdias/llckbdm)
 [![codecov](https://codecov.io/gh/danilomendesdias/llckbdm/branch/master/graph/badge.svg?token=eOpnwCvmIt)](https://codecov.io/gh/danilomendesdias/llckbdm)
+[![PyPI version shields.io](https://img.shields.io/pypi/v/llckbdm.svg)](https://pypi.python.org/pypi/llckbdm/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/llckbdm.svg)](https://pypi.python.org/pypi/llckbdm/)
+[![PyPI license](https://img.shields.io/pypi/l/llckbdm.svg)](https://pypi.python.org/pypi/llckbdm/)
 
 ## Line List Clustering Krylov Basis Diagonalization Method
 Core methods of Line List Clustering Krylov Basis Diagonalization Method written in Python 3.6.
 
-### Instalation
+In the current version, only KBDM is available. LLC-KBDM will be available soon.
+
+
+
+#### Instalation
+
+You can install it via pip:
+
+`pip install llckbdm`
+
+
+#### Development version
+
+If you prefer, you can work with the development version by following these steps:
 
 1. Make sure you have git, pip, virtualenv and Python 3.6 installed.
 
