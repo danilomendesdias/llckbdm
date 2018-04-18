@@ -2,8 +2,8 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from llckbdm.core import sig_gen
-from llckbdm.core.kbdm import kbdm, _compute_U_matrices
+from llckbdm import sig_gen
+from llckbdm.kbdm import kbdm, _compute_U_matrices
 
 
 @pytest.fixture
