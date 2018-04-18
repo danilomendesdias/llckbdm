@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 def main():
     setup(
         name='llckbdm',  
-        version='0.0.1rc3',
+        version='v0.0.1',
         description='Krylov Basis Diagonalization Method implementation in Python', 
         long_description=long_description,  
         long_description_content_type='text/markdown',
