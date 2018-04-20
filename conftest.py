@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pytest
 
+pytest_plugins = ['llckbdm._tests.fixtures']
+
 
 @pytest.fixture(scope="session")
 def data_path():

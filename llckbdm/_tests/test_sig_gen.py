@@ -1,27 +1,7 @@
 import numpy as np
 import pytest
 
-from llckbdm.core.sig_gen import fid, multi_fid, gen_t_freq_arrays, lorentzian_peak, spec, _validate_parameters
-
-
-@pytest.fixture
-def N():
-    return 2048
-
-
-@pytest.fixture
-def dwell():
-    return 5e-4
-
-
-@pytest.fixture
-def t_array(N, dwell):
-    return np.linspace(0, dwell * N, N)
-
-
-@pytest.fixture
-def freq_array(N, dwell):
-    return np.fft.fftshift(np.fft.fftfreq(N, dwell))
+from llckbdm.sig_gen import fid, multi_fid, gen_t_freq_arrays, lorentzian_peak, spec, _validate_parameters
 
 
 @pytest.fixture
