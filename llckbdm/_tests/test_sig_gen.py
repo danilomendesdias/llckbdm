@@ -5,26 +5,6 @@ from llckbdm.sig_gen import fid, multi_fid, gen_t_freq_arrays, lorentzian_peak, 
 
 
 @pytest.fixture
-def N():
-    return 2048
-
-
-@pytest.fixture
-def dwell():
-    return 5e-4
-
-
-@pytest.fixture
-def t_array(N, dwell):
-    return np.linspace(0, dwell * N, N)
-
-
-@pytest.fixture
-def freq_array(N, dwell):
-    return np.fft.fftshift(np.fft.fftfreq(N, dwell))
-
-
-@pytest.fixture
 def params():
     a_1, t2_1, f_1, phase_1 = 1., 0.1, 0, 0.
     a_2, t2_2, f_2, phase_2 = 2., 0.01, 100, np.pi / 2.
