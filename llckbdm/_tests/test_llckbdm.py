@@ -1,6 +1,6 @@
 import pytest
 
-from kbdm import kbdm
+from llckbdm.kbdm import kbdm
 from llckbdm.llckbdm import _sample_kbdm
 
 
