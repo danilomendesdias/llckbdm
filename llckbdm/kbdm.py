@@ -6,29 +6,43 @@ from scipy.linalg import svd, eig
 logger = logging.getLogger(__name__)
 
 
-def kbdm(data, dwell, gep_solver='svd', **kwargs):
+def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
     """
     :param numpy.ndarray data:
-        Input Data
+        Complex input data.
 
     :param float dwell:
         Dwell time in seconds.
 
-    :keyword int m:
+    :param int m:
         Number of columns/rows of U matrices.
 
-    :keyword int p:
+    :param str gep_solver:
+        Method used to solve Generalized Eigenvalue Problem. Can be 'svd', for self-implemented solution; or scipy
+        to use eig function from scipy.linalg.eig.
+        Default is 'svd'.
+
+    :param int p:
         Eigenvalue exponent of the generalized eigenvalue equation. It will represent a 'shift' during the construction
         of U^p and U^{p-1} matrices.
 
-    :return:
-        Spectrum Line Lists Estimations.
-    :rtype: numpy.ndarray
-    """
-    p = kwargs.get("p", 1)
-    m = kwargs.get("m", int((data.size + 1 - p) / 2))
+    :param int l:
+        This is used only with if gep_solver is set to 'svd'.
+        ..see:: _solve_gep_svd
+        Default is None.
 
-    if m > (data.size + 1 - p) / 2:
+    :param int q:
+        This is used only with if gep_solver is set to 'svd'.
+        ..see:: _solve_gep_svd
+        Default is 0.
+
+    :return:
+        Spectrum Line Lists Estimations inside tuples with the following order: (Amplitude, T2, Frequency, Phase).
+    :rtype: tuple(numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray)
+    """
+    if m is None:
+        m = int((data.size + 1 - p) / 2)
+    elif m > (data.size + 1 - p) / 2:
         raise ValueError("m can't be greater than (n + 1 - p)/2.")
 
     if gep_solver not in ['svd', 'scipy']:
@@ -36,8 +50,17 @@ def kbdm(data, dwell, gep_solver='svd', **kwargs):
 
     U0, Up_1, Up = _compute_U_matrices(data=data, m=m, p=p)
 
+    # @TODO: use attrs?
+    info = {
+        'm': m,
+        'p': p,
+    }
+
     if gep_solver == 'svd':
-        μ, B_norm = _solve_gep_svd(U0=U0, Up_1=Up_1, Up=Up, **kwargs)
+        μ, B_norm, svd_info = _solve_gep_svd(U0=U0, Up_1=Up_1, Up=Up, l=l, q=q)
+
+        info['q'] = svd_info['q']
+        info['l'] = svd_info['l']
     else:
         μ, B_norm = _solve_gep_scipy(U0=U0, Up_1=Up_1, Up=Up)
 
@@ -55,7 +78,11 @@ def kbdm(data, dwell, gep_solver='svd', **kwargs):
     F = np.real(Ω) / (2 * np.pi)
     T2 = 1. / np.imag(Ω)
 
-    return A, T2, F, PH
+    line_list = np.column_stack(
+        (A, T2, F, PH,)
+    )
+
+    return line_list, info
 
 
 def _compute_U_matrices(data, m, p):
@@ -96,7 +123,7 @@ def _compute_U_matrices(data, m, p):
     return U0, Up_1, Up
 
 
-def _solve_gep_svd(U0, Up_1, Up, **kwargs):
+def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
     """
     Solve Generalized Eigenvalue Problem (GEP) by reducing it into an ordinary eigenvalue problem through
     Singular Value Decomposition (SVD) of U^{p-1} matrix.
@@ -113,23 +140,25 @@ def _solve_gep_svd(U0, Up_1, Up, **kwargs):
         U^p matrix.
         ..see::  _compute_U_matrices
 
-    :keyword int l:
+    :param int l:
         U matrices dimensionality are reduced to l x l after applying SVD.
         Default is len(U0), which is m.
         ..see::  _compute_U_matrices
 
-    :keyword int q:
+    :param int q:
         Tikhonov regularization (TR) parameter. If q = 0, TR is ignored.
         Default is 0.
 
     :return: computed eigenvalues (μ) and normalized eigenvectors (B)
     :rtype: tuple(numpy.ndarray, numpy.ndarray)
     """
-    q = kwargs.get("q", 0)
     m = len(U0)
 
-    # Number of singular components
-    l = kwargs.get("l", m)
+    if q is None:
+        q = 0
+
+    if l is None:
+        l = m
 
     if l > m:
         raise ValueError("l can't be greater than m.")
@@ -168,7 +197,13 @@ def _solve_gep_svd(U0, Up_1, Up, **kwargs):
     B = R_ @ Dsqi_ @ P
     B_norm = _normalize_eigenvectors(B, U0)
 
-    return μ, B_norm
+    svd_info = {
+        'singular_values': s,
+        'q': q,
+        'l': l
+    }
+
+    return μ, B_norm, svd_info
 
 
 def _solve_gep_scipy(U0, Up_1, Up):

@@ -8,16 +8,17 @@ from llckbdm.kbdm import kbdm, _compute_U_matrices
 def test_kbdm(data_brain_sim, dwell, df_params_brain_sim, columns):
     m = 300
 
-    params_est = np.column_stack(
-        kbdm(
-            data_brain_sim,
-            dwell,
-            m=m,
-            gep_solver='scipy'
-        )
+    params_est, info = kbdm(
+        data_brain_sim,
+        dwell,
+        m=m,
+        gep_solver='scipy'
     )
 
-    assert len(params_est) == m
+    assert params_est.shape == (m, 4)
+
+    assert info['m'] == m
+    assert info['p'] == 1
 
     df_est = pd.DataFrame(data=params_est, columns=columns)
 
@@ -45,16 +46,19 @@ def test_kbdm(data_brain_sim, dwell, df_params_brain_sim, columns):
 def test_kbdm_svd(data_brain_sim, dwell, df_params_brain_sim, columns):
     m = 300
 
-    params_est = np.column_stack(
-        kbdm(
-            data_brain_sim,
-            dwell,
-            m=m,
-            gep_solver='svd',
-        )
+    params_est, info = kbdm(
+        data_brain_sim,
+        dwell,
+        m=m,
+        gep_solver='svd',
     )
 
-    assert len(params_est) == m
+    assert params_est.shape == (m, 4)
+
+    assert info['m'] == m
+    assert info['l'] == m
+    assert info['q'] == pytest.approx(0)
+    assert info['p'] == 1
 
     df_est = pd.DataFrame(data=params_est, columns=columns)
 
@@ -120,16 +124,17 @@ def test_kbdm_svd_with_q_greater_than_zero_should_use_tikhonov_regularization(da
 
     m = 100
 
-    params_est = np.column_stack(
-        kbdm(
-            data_brain_sim,
-            dwell,
-            m=m,
-            q=1e-3,
-            gep_solver='svd'
-        )
+    params_est, info =  kbdm(
+        data_brain_sim,
+        dwell,
+        m=m,
+        q=1e-3,
+        gep_solver='svd'
     )
 
     assert 'Using Tikhonov Regularization' in caplog.text
 
-    assert len(params_est) == m
+    assert params_est.shape == (m, 4)
+    assert info['q'] == pytest.approx(1e-3)
+    assert info['m'] == m
+
