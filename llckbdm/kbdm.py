@@ -61,6 +61,7 @@ def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
 
         info['q'] = svd_info['q']
         info['l'] = svd_info['l']
+        info['singular_values'] = svd_info['singular_values']
     else:
         μ, B_norm = _solve_gep_scipy(U0=U0, Up_1=Up_1, Up=Up)
 

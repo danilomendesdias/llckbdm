@@ -47,7 +47,7 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         raise ValueError("size of 'm_range' must be greater than 2.")
 
     # KBDM sampling for m values inside m_range
-    line_lists = _sample_kbdm(
+    line_lists, infos = _sample_kbdm(
         data=data,
         dwell=dwell,
         m_range=m_range,
@@ -57,7 +57,7 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         q=q,
     )
 
-    transf_line_list = _transform_line_lists(line_lists)
+    transf_line_list = _transform_line_lists(line_lists, dwell)
 
     clusters = _cluster_line_lists(transf_line_list)
 
@@ -70,7 +70,7 @@ def _sample_kbdm(data, dwell, m_range, p, gep_solver, l, q):
     """
     Compute samples of multiple computations of KBDM in a given range of m values.
 
-    :param data:
+    :param data:line_lists
         ..see:: llc_kbdm
 
     :param dwell:
@@ -94,12 +94,13 @@ def _sample_kbdm(data, dwell, m_range, p, gep_solver, l, q):
     :return: @TODO
     :rtype: @TODO
     """
-    range_line_lists = []
+    line_lists = []
+    infos = []
 
     for m in m_range:
         logger.info(f'Computing KBDM with m = {m}')
 
-        line_list = kbdm(
+        line_list, info = kbdm(
             data=data,
             dwell=dwell,
             m=m,
@@ -109,19 +110,46 @@ def _sample_kbdm(data, dwell, m_range, p, gep_solver, l, q):
             q=q,
         )
 
-        m_value_array = np.full_like(line_list[0], m)
+        line_lists.append(line_list)
+        infos.append(info)
 
-        range_line_lists.append(line_list)
-
-    return range_line_lists
-
-
-def _transform_line_lists(line_lists):
-    return line_lists
+    return line_lists, infos
 
 
-def _inverse_transform_line_lists(transformed_line_lists):
-    return transformed_line_lists
+def _transform_line_lists(line_lists, dwell):
+    A = line_lists[:, 0]
+    T2 = line_lists[:, 1]
+    F = line_lists[:, 2]
+    PH = line_lists[:, 3]
+
+    OMEGA = 2 * np.pi * F + 1j / T2
+
+    mu = np.exp(1j * dwell * OMEGA)
+
+    MU_RE = np.real(mu)
+    MU_IM = np.imag(mu)
+
+    return np.column_stack(
+        (MU_RE, MU_IM, A, PH)
+    )
+
+
+def _inverse_transform_line_lists(transformed_line_lists, dwell):
+    MU_RE = transformed_line_lists[:, 0]
+    MU_IM = transformed_line_lists[:, 1]
+    A = transformed_line_lists[:, 2]
+    PH = transformed_line_lists[:, 3]
+
+    MU = MU_RE  + 1j * MU_IM
+
+    OMEGA = -1j * np.log(MU) / dwell
+
+    T2 = 1. / np.imag(OMEGA)
+    F = np.real(OMEGA) / (2 * np.pi)
+
+    return np.column_stack(
+        (A, T2, F, PH)
+    )
 
 
 def _cluster_line_lists(line_lists):
