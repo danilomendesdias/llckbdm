@@ -57,8 +57,6 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         q=q,
     )
 
-
-
     transf_line_list = _transform_line_lists(line_lists)
 
     clusters = _cluster_line_lists(transf_line_list)
