@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from sklearn.cluster import DBSCAN
 
 from llckbdm.kbdm import kbdm
 
@@ -11,14 +12,14 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
     """
     Compute Line List Clusternig Krylov Basis Diagonalization Method (LLC-KBDM).
 
-   :param numpy.ndarray data:
+    :param numpy.ndarray data:
         Complex input data.
 
     :param float dwell:
         Dwell time in seconds.
 
     :param list|range m_range:
-        Range or list with number of columns/rows of U matrices on each KBDM sample.
+        Range or list with number of columns/rows of U matrices for iteration of KBDM sampling.
         Its size must be greater than 2.
 
     :param str gep_solver:
@@ -57,11 +58,14 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         q=q,
     )
 
+    # concatenate all line lists into a single dataset
+    samples = np.concatenate(line_lists)
+
     transf_line_list = _transform_line_lists(line_lists, dwell)
 
     clusters = _cluster_line_lists(transf_line_list)
 
-    final_line_lists = _inverse_transform_line_lists(clusters)
+    final_line_lists = _inverse_transform_line_lists(clusters, dwell)
 
     return final_line_lists
 
@@ -91,8 +95,9 @@ def _sample_kbdm(data, dwell, m_range, p, gep_solver, l, q):
     :param q:
         ..see:: llc_kbdm
 
-    :return: @TODO
-    :rtype: @TODO
+    :return: Tuple containing a list with obtained features for each value of m and respective dictionary containing
+    KBDM computations meta-information.
+    :rtype: tuple(list(numpy.array), dict)
     """
     line_lists = []
     infos = []
@@ -117,6 +122,19 @@ def _sample_kbdm(data, dwell, m_range, p, gep_solver, l, q):
 
 
 def _transform_line_lists(line_lists, dwell):
+    """
+    Transform line list data space into a basis composed by real and imaginary partes of eigenvalues of GEP problem;
+    amplitude and phase;
+
+    :param line_lists:
+        Features obtained from KBDM computations.
+
+    :param dwell:
+        ..see:: llc_kbdm
+
+    :return: Array containing features at the eigenvalues basis.
+    :rtype: numpy.ndarray
+    """
     A = line_lists[:, 0]
     T2 = line_lists[:, 1]
     F = line_lists[:, 2]
@@ -135,6 +153,19 @@ def _transform_line_lists(line_lists, dwell):
 
 
 def _inverse_transform_line_lists(transformed_line_lists, dwell):
+    """
+    Apply inverse transformation of line lists into original data space basis composed by amplitude,
+    transversal relaxation time, frequency and phase.
+
+    :param numpy.ndarray transformed_line_lists:
+        Array containing transformed features.
+
+    :param dwell:
+        ..see:: llc_kbdm
+
+    :return: Array containing features at the canonical data basis.
+    :rtype: numpy.ndarray
+    """
     MU_RE = transformed_line_lists[:, 0]
     MU_IM = transformed_line_lists[:, 1]
     A = transformed_line_lists[:, 2]
@@ -152,5 +183,60 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _cluster_line_lists(line_lists):
-    pass
+def _filter_samples(samples, amplitude_tol=1e-5):
+    """
+    Filter samples by removing amplitudes below a certain threshold and negative transversal relaxation times.
+
+    :param numpy.ndarray samples:
+        Samples containing line lists to be filtered .
+
+    :param float amplitude_tol:
+        Cut-off value for amplitudes.
+        Default is 1e-10.
+
+    :return: filtered samples
+    :rtype: numpy.ndarray
+    """
+    if samples.size == 0:
+        return samples
+
+    amplitude_filter = samples[:, 0] > amplitude_tol
+    T2_filter = samples[:, 1] > 0
+
+    return samples[amplitude_filter & T2_filter]
+
+
+def _cluster_line_lists(samples, eps, min_samples):
+    """
+    Use DBSCAN to cluster samples.
+
+    :param numpy.ndarray samples:
+        Array containing line lists to be clustered
+
+    :param eps:
+        ..see:: sklearn.cluster.DBSCAN
+
+    :param min_samples:
+        ..see:: sklearn.cluster.DBSCAN
+
+    :return: number of estimated clusters, labels for each sample (with same dimensions of samples input),
+        list containing labels of each cluster and labels of non-clustered samples.
+
+    :rtype: tuple(int, numpy.ndarray, list(tuple), tuple)
+    """
+
+    db = DBSCAN(eps=eps, min_samples=min_samples)
+    db.fit(samples)
+
+    labels = db.labels_
+
+    num_clusters = len(set(labels) - {-1})
+
+    clustered = []
+
+    for cluster_label in range(num_clusters):
+        clustered.append(np.nonzero(labels == cluster_label))
+
+    non_clustered = np.nonzero(labels == -1)
+
+    return num_clusters, labels, clustered, non_clustered
