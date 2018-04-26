@@ -71,7 +71,7 @@ def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
 
     # real amplitudes and phases
     A = np.abs(D)
-    PH = np.angle(A)
+    PH = np.angle(D)
 
     # Obtaining T2 and w values from eigenvalues
     Ω = -1j * np.log(μ) / dwell
