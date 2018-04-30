@@ -1,46 +1,7 @@
 import pytest
 import pandas as pd
-import numpy as np
 
 from llckbdm.kbdm import kbdm, _compute_U_matrices
-
-
-def test_kbdm(data_brain_sim, dwell, df_params_brain_sim, columns):
-    m = 300
-
-    params_est, info = kbdm(
-        data_brain_sim,
-        dwell,
-        m=m,
-        gep_solver='scipy'
-    )
-
-    assert params_est.shape == (m, 4)
-
-    assert info['m'] == m
-    assert info['p'] == 1
-
-    df_est = pd.DataFrame(data=params_est, columns=columns)
-
-    df_est = df_est[df_est['amplitude'] > 1e-3]
-
-    df_est = df_est.sort_values(['frequency'])
-    df_params_brain_sim = df_params_brain_sim.sort_values(['frequency'])
-
-    assert len(df_est) == 16
-
-    for i in range(16):
-        assert pytest.approx(df_est['amplitude'].iloc[i], abs=1e-1) == df_params_brain_sim['amplitude'].iloc[i], \
-            f'Amplitude does not match at peak #{i}'
-
-        assert pytest.approx(df_est['t2'].iloc[i], rel=1e-3) == df_params_brain_sim['t2'].iloc[i], \
-            f'T2 does not match at peak #{i}'
-
-        assert pytest.approx(df_est['frequency'].iloc[i], abs=0.3) == df_params_brain_sim['frequency'].iloc[i], \
-            f'Frequency does not match at peak #{i}'
-
-        assert pytest.approx(df_est['phase'].iloc[i], abs=1e-10) == df_params_brain_sim['phase'].iloc[i], \
-            f'Phase does not match at peak #{i}'
 
 
 def test_kbdm_svd(data_brain_sim, dwell, df_params_brain_sim, columns):
@@ -137,4 +98,3 @@ def test_kbdm_svd_with_q_greater_than_zero_should_use_tikhonov_regularization(da
     assert params_est.shape == (m, 4)
     assert info['q'] == pytest.approx(1e-3)
     assert info['m'] == m
-

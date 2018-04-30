@@ -217,6 +217,7 @@ def _solve_gep_scipy(U0, Up_1, Up):
     :return: computed eigenvalues (μ) and normalized eigenvectors (B)
     :rtype: tuple(numpy.ndarray, numpy.ndarray)
     """
+    logger.warning("THIS SOLVER IS DEPRECATED AND WILL BE REMOVED SOON. USE 'svd' SOLVER INSTEAD.")
     μ, B = eig(b=Up_1, a=Up, overwrite_a=True, overwrite_b=True)
 
     B_norm = _normalize_eigenvectors(B, U0)

@@ -3,12 +3,12 @@ import logging
 import numpy as np
 from sklearn.cluster import DBSCAN
 
-from llckbdm.kbdm import kbdm
+from llckbdm.sampling import sample_kbdm, filter_samples
 
 logger = logging.getLogger(__name__)
 
 
-def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
+def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, min_samples=None):
     """
     Compute Line List Clusternig Krylov Basis Diagonalization Method (LLC-KBDM).
 
@@ -47,8 +47,12 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
     if len(m_range) < 2:
         raise ValueError("size of 'm_range' must be greater than 2.")
 
+    # this is a fixed heuristic that needs to be checked in the future
+    if min_samples is None:
+        min_samples = len(m_range) / 2
+
     # KBDM sampling for m values inside m_range
-    line_lists, infos = _sample_kbdm(
+    line_lists, infos = sample_kbdm(
         data=data,
         dwell=dwell,
         m_range=m_range,
@@ -58,67 +62,25 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         q=q,
     )
 
-    # concatenate all line lists into a single dataset
+    # concatenate all sampled line lists into a single dataset
     samples = np.concatenate(line_lists)
 
-    transf_line_list = _transform_line_lists(line_lists, dwell)
+    samples = filter_samples(samples)
 
-    clusters = _cluster_line_lists(transf_line_list)
+    transf_line_list = _transform_line_lists(samples, dwell)
 
-    final_line_lists = _inverse_transform_line_lists(clusters, dwell)
+    num_clusters, labels, clustered, non_clustered = _cluster_line_lists(
+        samples=transf_line_list,
+        eps=eps,
+        min_samples=min_samples
+    )
 
-    return final_line_lists
+    summarized_line_list = _summarize_clusters(
+        samples=samples,
+        clusters=clustered,
+    )
 
-
-def _sample_kbdm(data, dwell, m_range, p, gep_solver, l, q):
-    """
-    Compute samples of multiple computations of KBDM in a given range of m values.
-
-    :param data:line_lists
-        ..see:: llc_kbdm
-
-    :param dwell:
-        ..see:: llc_kbdm
-
-    :param m_range:
-        ..see:: llc_kbdm
-
-    :param p:
-        ..see:: llc_kbdm
-
-    :param gep_solver:
-        ..see:: llc_kbdm
-
-    :param l:
-        ..see:: llc_kbdm
-
-    :param q:
-        ..see:: llc_kbdm
-
-    :return: Tuple containing a list with obtained features for each value of m and respective dictionary containing
-    KBDM computations meta-information.
-    :rtype: tuple(list(numpy.array), dict)
-    """
-    line_lists = []
-    infos = []
-
-    for m in m_range:
-        logger.info(f'Computing KBDM with m = {m}')
-
-        line_list, info = kbdm(
-            data=data,
-            dwell=dwell,
-            m=m,
-            p=p,
-            gep_solver=gep_solver,
-            l=l,
-            q=q,
-        )
-
-        line_lists.append(line_list)
-        infos.append(info)
-
-    return line_lists, infos
+    return summarized_line_list, line_lists
 
 
 def _transform_line_lists(line_lists, dwell):
@@ -138,7 +100,7 @@ def _transform_line_lists(line_lists, dwell):
     A = line_lists[:, 0]
     T2 = line_lists[:, 1]
     F = line_lists[:, 2]
-    PH = line_lists[:, 3]
+    PH = line_lists[:, 3] * 0
 
     OMEGA = 2 * np.pi * F + 1j / T2
 
@@ -183,29 +145,6 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _filter_samples(samples, amplitude_tol=1e-5):
-    """
-    Filter samples by removing amplitudes below a certain threshold and negative transversal relaxation times.
-
-    :param numpy.ndarray samples:
-        Samples containing line lists to be filtered .
-
-    :param float amplitude_tol:
-        Cut-off value for amplitudes.
-        Default is 1e-10.
-
-    :return: filtered samples
-    :rtype: numpy.ndarray
-    """
-    if samples.size == 0:
-        return samples
-
-    amplitude_filter = samples[:, 0] > amplitude_tol
-    T2_filter = samples[:, 1] > 0
-
-    return samples[amplitude_filter & T2_filter]
-
-
 def _cluster_line_lists(samples, eps, min_samples):
     """
     Use DBSCAN to cluster samples.
@@ -225,10 +164,11 @@ def _cluster_line_lists(samples, eps, min_samples):
     :rtype: tuple(int, numpy.ndarray, list(tuple), tuple)
     """
 
-    db = DBSCAN(eps=eps, min_samples=min_samples)
-    db.fit(samples)
+    cl = DBSCAN(eps=eps, min_samples=min_samples)
+    #cl = hdbscan.HDBSCAN(min_samples=min_samples)
 
-    labels = db.labels_
+    cl.fit(samples)
+    labels = cl.labels_
 
     num_clusters = len(set(labels) - {-1})
 
@@ -240,3 +180,36 @@ def _cluster_line_lists(samples, eps, min_samples):
     non_clustered = np.nonzero(labels == -1)
 
     return num_clusters, labels, clustered, non_clustered
+
+
+def _summarize_clusters(samples, clusters, summarizer=None):
+    """
+    Compute compact line list from
+
+    :param numpy.ndarray samples:
+        KBDM line listed sampled in a given range of m values.
+
+    :param list clusters:
+        List containing indexes of each cluster.
+
+    :param function summarizer:
+        Callback function for summarizing each cluster into a single feature.
+
+    :return:
+    """
+    line_list = []
+
+    if summarizer is None:
+        #summarizer = np.average
+        summarizer = np.median
+
+    for cluster in clusters:
+        cluster_samples = samples[cluster]
+        cluster_samples[:,1] = 1 / cluster_samples[:,1]
+        summarized_cluster = summarizer(cluster_samples, axis=0)
+        summarized_cluster[1] = 1 / summarized_cluster[1]
+        # summarized_cluster = np.average(cluster_samples, axis=0)
+
+        line_list.append(summarized_cluster)
+
+    return np.array(line_list)

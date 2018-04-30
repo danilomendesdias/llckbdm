@@ -17,7 +17,7 @@ def dwell():
 
 @pytest.fixture
 def t(N, dwell):
-    return np.linspace(0, dwell * N, N)
+    return np.linspace(0, dwell * N, N, endpoint=False)
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def data_brain_sim(df_params_brain_sim, t):
 
 @pytest.fixture
 def t_array(N, dwell):
-    return np.linspace(0, dwell * N, N)
+    return np.linspace(0, dwell * N, N, endpoint=False)
 
 
 @pytest.fixture
