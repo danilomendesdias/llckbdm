@@ -4,3 +4,5 @@ pandas==0.22.0
 pytest==3.5.0
 pytest-cov==2.5.1
 scikit-learn==0.19.1
+attrs==17.4.0
+hdbscan==0.8.12

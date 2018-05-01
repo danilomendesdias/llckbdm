@@ -17,7 +17,7 @@ def dwell():
 
 @pytest.fixture
 def t(N, dwell):
-    return np.linspace(0, dwell * N, N)
+    return np.linspace(0, dwell * N, N, endpoint=False)
 
 
 @pytest.fixture
@@ -36,6 +36,11 @@ def df_params_brain_sim(data_path, columns):
 
 
 @pytest.fixture
+def params_brain_sim(df_params_brain_sim):
+    return df_params_brain_sim.as_matrix()
+
+
+@pytest.fixture
 def data_brain_sim(df_params_brain_sim, t):
     data = sig_gen.multi_fid(t, df_params_brain_sim.as_matrix())
 
@@ -44,7 +49,7 @@ def data_brain_sim(df_params_brain_sim, t):
 
 @pytest.fixture
 def t_array(N, dwell):
-    return np.linspace(0, dwell * N, N)
+    return np.linspace(0, dwell * N, N, endpoint=False)
 
 
 @pytest.fixture
