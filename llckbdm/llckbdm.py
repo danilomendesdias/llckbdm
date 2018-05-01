@@ -1,16 +1,23 @@
 import logging
 
+import hdbscan
+import attr
 import numpy as np
-from sklearn.cluster import DBSCAN
 
+from llckbdm.min_rmse_kbdm import min_rmse_kbdm
 from llckbdm.sampling import sample_kbdm, filter_samples
 
 logger = logging.getLogger(__name__)
 
+@attr.s
+class LlcKbdmResult:
+    line_list = attr.ib()
+    rmse = attr.ib()
 
-def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, min_samples=None):
+
+def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
     """
-    Compute Line List Clusternig Krylov Basis Diagonalization Method (LLC-KBDM).
+    Compute Line List Clustering Krylov Basis Diagonalization Method (LLC-KBDM).
 
     :param numpy.ndarray data:
         Complex input data.
@@ -36,7 +43,7 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, min_sa
         ..see:: llckbdm.kbdm._solve_gep_svd
         Default is None.
 
-    :param int q:
+    :param float q:
         This is used only with if gep_solver is set to 'svd'.
         ..see:: llckbdm.kbdm._solve_gep_svd
         Default is 0.
@@ -46,10 +53,6 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, min_sa
     """
     if len(m_range) < 2:
         raise ValueError("size of 'm_range' must be greater than 2.")
-
-    # this is a fixed heuristic that needs to be checked in the future
-    if min_samples is None:
-        min_samples = len(m_range) / 2
 
     # KBDM sampling for m values inside m_range
     line_lists, infos = sample_kbdm(
@@ -69,18 +72,33 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, min_sa
 
     transf_line_list = _transform_line_lists(samples, dwell)
 
-    num_clusters, labels, clustered, non_clustered = _cluster_line_lists(
-        samples=transf_line_list,
-        eps=eps,
-        min_samples=min_samples
-    )
+    summarized_line_lists = []
 
-    summarized_line_list = _summarize_clusters(
-        samples=samples,
-        clusters=clustered,
-    )
+    m_range_size = len(m_range)
 
-    return summarized_line_list, line_lists
+    for min_samples in range(int(np.ceil(0.10 * m_range_size )), m_range_size):
+        logger.debug('HDBSCAN with min_samples = %d', min_samples)
+
+        num_clusters, labels, clustered, non_clustered = _cluster_line_lists(
+            data=data,
+            samples=transf_line_list,
+            eps=0.01,
+            min_samples=min_samples
+        )
+
+        summarized_line_list = _summarize_clusters(
+            samples=samples,
+            clusters=clustered,
+        )
+
+        summarized_line_lists.append(summarized_line_list)
+
+    min_rmse_kbdm_results = min_rmse_kbdm(data=data, dwell=dwell, samples=summarized_line_lists)
+
+    return LlcKbdmResult(
+        line_list=min_rmse_kbdm_results.line_list,
+        rmse=min_rmse_kbdm_results.min_rmse
+    )
 
 
 def _transform_line_lists(line_lists, dwell):
@@ -133,7 +151,7 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     A = transformed_line_lists[:, 2]
     PH = transformed_line_lists[:, 3]
 
-    MU = MU_RE  + 1j * MU_IM
+    MU = MU_RE + 1j * MU_IM
 
     OMEGA = -1j * np.log(MU) / dwell
 
@@ -145,7 +163,7 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _cluster_line_lists(samples, eps, min_samples):
+def _cluster_line_lists(data, samples, eps, min_samples):
     """
     Use DBSCAN to cluster samples.
 
@@ -164,8 +182,8 @@ def _cluster_line_lists(samples, eps, min_samples):
     :rtype: tuple(int, numpy.ndarray, list(tuple), tuple)
     """
 
-    cl = DBSCAN(eps=eps, min_samples=min_samples)
-    #cl = hdbscan.HDBSCAN(min_samples=min_samples)
+    #cl = DBSCAN(eps=eps, min_samples=min_samples)
+    cl = hdbscan.HDBSCAN(min_samples=min_samples)
 
     cl.fit(samples)
     labels = cl.labels_

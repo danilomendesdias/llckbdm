@@ -33,48 +33,15 @@ def test_inverse_transform_line_lists(params_brain_sim, dwell):
     assert params_brain_sim == pytest.approx(_inverse_transform_line_lists(transf_line_lists, dwell))
 
 
-def test_cluster_line_lists_for_noiseless_data(data_brain_sim, dwell):
-    m_range = range(150, 160, 1)
-    l = 30
-    k = 16  # number of genuine peaks
-
-    line_lists, _ = sample_kbdm(
-        data=data_brain_sim,
-        dwell=dwell,
-        m_range=m_range,
-        p=1,
-        gep_solver='svd',
-        l=l,
-        q=0,
-    )
-
-    samples = np.concatenate(line_lists)
-
-    num_clusters, labels, clustered, non_clustered = _cluster_line_lists(samples, eps=0.01, min_samples=len(m_range))
-
-    assert num_clusters == len(clustered) == k
-
-    non_clustered_samples = samples[non_clustered]
-
-    assert np.shape(samples[non_clustered]) == (len(m_range) * (l - k), 4)
-
-    assert filter_samples(non_clustered_samples).size == 0
-
-    for i in range(num_clusters):
-        assert np.nonzero(labels == i) == pytest.approx(clustered[i], abs=0)
-        assert np.shape(samples[clustered[i]]) == (len(m_range), 4)
-
-    assert np.nonzero(labels == -1) == pytest.approx(non_clustered, abs=0)
-
-
 def test_llc_kbdm(data_brain_sim, dwell, params_brain_sim, N):
-    m_range = range(150, 250, 1)
+    m_range = range(250, 260, 1)
 
-    noise = np.random.randn(N,) + 1j * np.random.randn(N)
-    noise = noise * 0.000
+    noise = np.random.randn(N) + 1j * np.random.randn(N)
+    noise = noise * 1e-5
+    data = data_brain_sim + noise
 
-    line_list = llc_kbdm(
-        data=data_brain_sim + noise,
+    results = llc_kbdm(
+        data=data,
         dwell=dwell,
         m_range=m_range,
         p=1,
@@ -82,7 +49,11 @@ def test_llc_kbdm(data_brain_sim, dwell, params_brain_sim, N):
         l=30,
     )
 
-    # assert len(line_list) == len(params_brain_sim)
+    line_list = results.line_list
+
+    line_list = filter_samples(line_list, amplitude_tol=1e-3)
+
+    assert len(line_list) == len(params_brain_sim)
 
     for i, param in enumerate(params_brain_sim):
         a_i, t2_i, f_i, ph_i = param[0], param[1], param[2], param[3]
