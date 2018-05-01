@@ -1,9 +1,19 @@
 import logging
 
+import attr
 import numpy as np
 from scipy.linalg import svd, eig
 
 logger = logging.getLogger(__name__)
+
+
+@attr.s
+class KbdmInfo:
+    m = attr.ib()
+    l = attr.ib()
+    p = attr.ib()
+    q = attr.ib()
+    singular_values = attr.ib()
 
 
 def kbdm(data, dwell, m=None, p=1, l=None, q=0):
@@ -16,14 +26,17 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
 
     :param int m:
         Number of columns/rows of U matrices.
+        Default is n = len(data) / 2.
 
     :param int p:
         Eigenvalue exponent of the generalized eigenvalue equation. It will represent a 'shift' during the construction
         of U^p and U^{p-1} matrices.
+        Default is 1.
 
     :param int l:
         ..see:: _solve_gep_svd
-        Default is None.
+        If set to None, default is m.
+        Default is None (m).
 
     :param float q:
         ..see:: _solve_gep_svd
@@ -33,25 +46,25 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
         Spectrum Line Lists Estimations inside tuples with the following order: (Amplitude, T2, Frequency, Phase).
     :rtype: tuple(numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray)
     """
-    if m is None:
-        m = int((data.size + 1 - p) / 2)
-    elif m > (data.size + 1 - p) / 2:
-        raise ValueError("m can't be greater than (n + 1 - p)/2.")
+    if m is None and l is None:
+        raise ValueError("l or m must be specified")
+    elif m is None:
+        m = l
+    elif l is None:
+        l = m
+    elif l > m:
+        raise ValueError("l can't be greater than m")
+
+    m_max = (data.size + 1 - p) / 2
+
+    if m > m_max or l > m_max:
+        raise ValueError("m or l can't be greater than (n + 1 - p)/2.")
 
     U0, Up_1, Up = _compute_U_matrices(data=data, m=m, p=p)
 
-    # @TODO: use attrs?
-    info = {
-        'm': m,
-        'p': p,
-    }
-
     μ, B_norm, svd_info = _solve_gep_svd(U0=U0, Up_1=Up_1, Up=Up, l=l, q=q)
 
-    info['q'] = svd_info['q']
-    info['l'] = svd_info['l']
-    info['singular_values'] = svd_info['singular_values']
-
+    info = KbdmInfo(m=m, p=p, l=l, q=q, singular_values=svd_info['singular_values'])
 
     # Complex amplitude calculations
     D_sqrt = B_norm @ data[:m]
@@ -134,7 +147,7 @@ def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
         Default is len(U0), which is m.
         ..see::  _compute_U_matrices
 
-    :param int q:
+    :param float q:
         Tikhonov regularization (TR) parameter. If q = 0, TR is ignored.
         Default is 0.
 

@@ -42,7 +42,12 @@ def test_sample_kbdm(data_brain_sim, dwell):
     )
 
     assert line_lists[0] == pytest.approx(line_list_0_expected)
-    assert infos[0] == pytest.approx(info_expected)
+
+    assert infos[0].m == info_expected.m
+    assert infos[0].l == info_expected.l
+    assert infos[0].p == info_expected.p
+    assert infos[0].q == info_expected.q
+    assert infos[0].singular_values == pytest.approx(info_expected.singular_values)
 
 
 def test_filter_samples_should_filter_invalid_kbdm_lines_for_data_without_noise(m_150_kbdm_line_list, params_brain_sim):
