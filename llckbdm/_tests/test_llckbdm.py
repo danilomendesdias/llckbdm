@@ -45,7 +45,6 @@ def test_llc_kbdm(data_brain_sim, dwell, params_brain_sim, N):
         dwell=dwell,
         m_range=m_range,
         p=1,
-        gep_solver='svd',
         l=30,
     )
 

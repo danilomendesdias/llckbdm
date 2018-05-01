@@ -57,7 +57,6 @@ def sample_kbdm(data, dwell, m_range, p, gep_solver, l, q=0, filter_invalid_feat
             dwell=dwell,
             m=m,
             p=p,
-            gep_solver=gep_solver,
             l=l,
             q=q,
         )

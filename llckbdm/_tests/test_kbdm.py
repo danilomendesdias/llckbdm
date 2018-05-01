@@ -11,7 +11,6 @@ def test_kbdm_svd(data_brain_sim, dwell, df_params_brain_sim, columns):
         data_brain_sim,
         dwell,
         m=m,
-        gep_solver='svd',
     )
 
     assert params_est.shape == (m, 4)
@@ -73,24 +72,16 @@ def test_kbdm_invalid_m_n_p_constraint_should_raise_value_error(data_brain_sim, 
     assert "m can't be greater than (n + 1 - p)/2" in str(e_info.value)
 
 
-def test_kbdm_invalid_gep_solver_should_raise_value_error(data_brain_sim, dwell):
-    with pytest.raises(ValueError) as e_info:
-        kbdm(data=data_brain_sim, dwell=dwell, gep_solver='invalid')
-
-    assert "GEP solver can be 'svd' or 'scipy'" in str(e_info.value)
-
-
 def test_kbdm_svd_with_q_greater_than_zero_should_use_tikhonov_regularization(data_brain_sim, dwell, caplog):
     caplog.set_level('DEBUG')
 
     m = 100
 
-    params_est, info =  kbdm(
+    params_est, info = kbdm(
         data_brain_sim,
         dwell,
         m=m,
         q=1e-3,
-        gep_solver='svd'
     )
 
     assert 'Using Tikhonov Regularization' in caplog.text

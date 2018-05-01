@@ -6,7 +6,7 @@ from scipy.linalg import svd, eig
 logger = logging.getLogger(__name__)
 
 
-def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
+def kbdm(data, dwell, m=None, p=1, l=None, q=0):
     """
     :param numpy.ndarray data:
         Complex input data.
@@ -17,22 +17,15 @@ def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
     :param int m:
         Number of columns/rows of U matrices.
 
-    :param str gep_solver:
-        Method used to solve Generalized Eigenvalue Problem. Can be 'svd', for self-implemented solution; or scipy
-        to use eig function from scipy.linalg.eig.
-        Default is 'svd'.
-
     :param int p:
         Eigenvalue exponent of the generalized eigenvalue equation. It will represent a 'shift' during the construction
         of U^p and U^{p-1} matrices.
 
     :param int l:
-        This is used only with if gep_solver is set to 'svd'.
         ..see:: _solve_gep_svd
         Default is None.
 
-    :param int q:
-        This is used only with if gep_solver is set to 'svd'.
+    :param float q:
         ..see:: _solve_gep_svd
         Default is 0.
 
@@ -45,9 +38,6 @@ def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
     elif m > (data.size + 1 - p) / 2:
         raise ValueError("m can't be greater than (n + 1 - p)/2.")
 
-    if gep_solver not in ['svd', 'scipy']:
-        raise ValueError("GEP solver can be 'svd' or 'scipy'")
-
     U0, Up_1, Up = _compute_U_matrices(data=data, m=m, p=p)
 
     # @TODO: use attrs?
@@ -56,14 +46,12 @@ def kbdm(data, dwell, m=None, gep_solver='svd', p=1, l=None, q=0):
         'p': p,
     }
 
-    if gep_solver == 'svd':
-        μ, B_norm, svd_info = _solve_gep_svd(U0=U0, Up_1=Up_1, Up=Up, l=l, q=q)
+    μ, B_norm, svd_info = _solve_gep_svd(U0=U0, Up_1=Up_1, Up=Up, l=l, q=q)
 
-        info['q'] = svd_info['q']
-        info['l'] = svd_info['l']
-        info['singular_values'] = svd_info['singular_values']
-    else:
-        μ, B_norm = _solve_gep_scipy(U0=U0, Up_1=Up_1, Up=Up)
+    info['q'] = svd_info['q']
+    info['l'] = svd_info['l']
+    info['singular_values'] = svd_info['singular_values']
+
 
     # Complex amplitude calculations
     D_sqrt = B_norm @ data[:m]
@@ -205,24 +193,6 @@ def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
     }
 
     return μ, B_norm, svd_info
-
-
-def _solve_gep_scipy(U0, Up_1, Up):
-    """
-    Solve the same equation described by _solve_gep_svd, but using scipy.linalg.eig implementation.
-
-    ..see:: scipy.linalg.eig for implementation details
-    ..see::  _solve_gep_svd for arguments documentation
-
-    :return: computed eigenvalues (μ) and normalized eigenvectors (B)
-    :rtype: tuple(numpy.ndarray, numpy.ndarray)
-    """
-    logger.warning("THIS SOLVER IS DEPRECATED AND WILL BE REMOVED SOON. USE 'svd' SOLVER INSTEAD.")
-    μ, B = eig(b=Up_1, a=Up, overwrite_a=True, overwrite_b=True)
-
-    B_norm = _normalize_eigenvectors(B, U0)
-
-    return μ, B_norm
 
 
 def _normalize_eigenvectors(B, U0):
