@@ -1,10 +1,8 @@
 import pytest
 import numpy as np
 
-from llckbdm.sampling import filter_samples, sample_kbdm
-from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists, \
-    _cluster_line_lists
-
+from llckbdm.sampling import filter_samples
+from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists
 
 
 def test_transform_line_lists(params_brain_sim, dwell):

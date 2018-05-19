@@ -6,3 +6,4 @@ pytest-cov==2.5.1
 scikit-learn==0.19.1
 attrs==17.4.0
 hdbscan==0.8.12
+matplotlib==2.2.2

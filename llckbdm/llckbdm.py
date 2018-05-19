@@ -3,16 +3,29 @@ import logging
 import hdbscan
 import attr
 import numpy as np
+from sklearn.metrics import silhouette_samples
 
 from llckbdm.min_rmse_kbdm import min_rmse_kbdm
 from llckbdm.sampling import sample_kbdm, filter_samples
 
 logger = logging.getLogger(__name__)
 
+
 @attr.s
 class LlcKbdmResult:
     line_list = attr.ib()
     rmse = attr.ib()
+    silhouette = attr.ib()
+
+
+@attr.s
+class ClusteringResult:
+    num_clusters = attr.ib()
+    labels = attr.ib()
+    clustered = attr.ib()
+    non_clustered = attr.ib()
+    summarized_line_list = attr.ib()
+    clustered_silhouettes = attr.ib()
 
 
 def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
@@ -72,32 +85,41 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
 
     transf_line_list = _transform_line_lists(samples, dwell)
 
-    summarized_line_lists = []
-
     m_range_size = len(m_range)
 
-    for min_samples in range(int(np.ceil(0.10 * m_range_size )), m_range_size):
+    clustering_results = []
+
+    for min_samples in range(int(np.ceil(0.10 * m_range_size)), m_range_size):
         logger.debug('HDBSCAN with min_samples = %d', min_samples)
 
-        num_clusters, labels, clustered, non_clustered = _cluster_line_lists(
+        clustering_result = _cluster_line_lists(
             data=data,
-            samples=transf_line_list,
+            samples=samples,
+            transf_samples=transf_line_list,
             eps=0.01,
             min_samples=min_samples
         )
 
-        summarized_line_list = _summarize_clusters(
-            samples=samples,
-            clusters=clustered,
-        )
+        clustering_results.append(clustering_result)
 
-        summarized_line_lists.append(summarized_line_list)
+    summarized_line_lists = [
+        cl_result.summarized_line_list for cl_result in clustering_results
+    ]
 
-    min_rmse_kbdm_results = min_rmse_kbdm(data=data, dwell=dwell, samples=summarized_line_lists)
+    min_rmse_kbdm_results = min_rmse_kbdm(
+        data=data,
+        dwell=dwell,
+        samples=summarized_line_lists
+    )
+
+    silhouette = \
+        clustering_results[min_rmse_kbdm_results.min_index].clustered_silhouettes
+
 
     return LlcKbdmResult(
         line_list=min_rmse_kbdm_results.line_list,
-        rmse=min_rmse_kbdm_results.min_rmse
+        rmse=min_rmse_kbdm_results.min_rmse,
+        silhouette=silhouette
     )
 
 
@@ -163,7 +185,7 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _cluster_line_lists(data, samples, eps, min_samples):
+def _cluster_line_lists(data, samples, transf_samples, eps, min_samples):
     """
     Use DBSCAN to cluster samples.
 
@@ -185,20 +207,46 @@ def _cluster_line_lists(data, samples, eps, min_samples):
     #cl = DBSCAN(eps=eps, min_samples=min_samples)
     cl = hdbscan.HDBSCAN(min_samples=min_samples)
 
-    cl.fit(samples)
+    cl.fit(transf_samples)
     labels = cl.labels_
 
     num_clusters = len(set(labels) - {-1})
 
     clustered = []
 
+    sample_silhouette_values = silhouette_samples(transf_samples, labels)
+    clustered_silhouettes = []
+
     for cluster_label in range(num_clusters):
-        clustered.append(np.nonzero(labels == cluster_label))
+        cluster = np.nonzero(labels == cluster_label)
+
+        clustered.append(cluster)
+
+        clustered_silhouettes.append(
+            np.average(sample_silhouette_values[cluster])
+        )
+        #     [
+        #         ,
+        #         np.average(sample_silhouette_values[cluster]),
+        #         np.std(sample_silhouette_values[cluster])
+        #     ]
+        # )
 
     non_clustered = np.nonzero(labels == -1)
 
-    return num_clusters, labels, clustered, non_clustered
+    summarized_line_list = _summarize_clusters(
+        samples=samples,
+        clusters=clustered,
+    )
 
+    return ClusteringResult(
+        num_clusters=num_clusters,
+        labels=labels,
+        clustered=clustered,
+        non_clustered=non_clustered,
+        summarized_line_list=summarized_line_list,
+        clustered_silhouettes=clustered_silhouettes,
+    )
 
 def _summarize_clusters(samples, clusters, summarizer=None):
     """
@@ -218,12 +266,12 @@ def _summarize_clusters(samples, clusters, summarizer=None):
     line_list = []
 
     if summarizer is None:
-        #summarizer = np.average
-        summarizer = np.median
+        summarizer = np.average
+        #summarizer = np.median
 
     for cluster in clusters:
         cluster_samples = samples[cluster]
-        cluster_samples[:,1] = 1 / cluster_samples[:,1]
+        cluster_samples[:, 1] = 1 / cluster_samples[:, 1]
         summarized_cluster = summarizer(cluster_samples, axis=0)
         summarized_cluster[1] = 1 / summarized_cluster[1]
         # summarized_cluster = np.average(cluster_samples, axis=0)
