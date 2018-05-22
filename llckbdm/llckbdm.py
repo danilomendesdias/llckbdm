@@ -5,8 +5,10 @@ import attr
 import numpy as np
 from sklearn.metrics import silhouette_samples
 
+from llckbdm.sig_gen import multi_fid, gen_t_freq_arrays
 from llckbdm.min_rmse_kbdm import min_rmse_kbdm
 from llckbdm.sampling import sample_kbdm, filter_samples
+from llckbdm.metrics import calculate_freq_domain_rmse
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,14 @@ class LlcKbdmResult:
     line_list = attr.ib()
     rmse = attr.ib()
     silhouette = attr.ib()
+
+
+@attr.s
+class IterativeLlcKbdmResult:
+    line_list = attr.ib()
+    line_lists = attr.ib()
+    rmse = attr.ib()
+    silhouettes = attr.ib()
 
 
 @attr.s
@@ -112,14 +122,72 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         samples=summarized_line_lists
     )
 
-    silhouette = \
+    silhouette = np.array(
         clustering_results[min_rmse_kbdm_results.min_index].clustered_silhouettes
-
+    )
 
     return LlcKbdmResult(
         line_list=min_rmse_kbdm_results.line_list,
         rmse=min_rmse_kbdm_results.min_rmse,
         silhouette=silhouette
+    )
+
+
+def iterative_llc_kbdm(
+        data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, max_iterations=5, silhouette_threshold=0.6
+):
+
+    assert max_iterations >= 1
+
+    curr_data_est = np.zeros_like(data)
+
+    line_lists = []
+    silhouettes = []
+
+    t_array, _ = gen_t_freq_arrays(N=len(data), dwell=dwell)
+
+    n_peaks = 0
+
+    threshoulds = np.linspace(75, 0, max_iterations)
+
+    for i in range(max_iterations):
+        print(f'Iteration #{i}')
+        curr_res = data - curr_data_est
+
+        results = llc_kbdm(data=curr_res, dwell=dwell, m_range=m_range, gep_solver=gep_solver, p=p, l=l, q=q)
+
+        filtered_index = np.nonzero(
+            (results.silhouette > np.percentile(results.silhouette, threshoulds[i]))
+        )
+
+        line_list = results.line_list[filtered_index]
+
+        if len(line_list) == 0:
+            logging.info('No more peaks can be fitted. Stopping.')
+            break
+
+        curr_data_est_i = multi_fid(t_array=t_array, params=line_list)
+
+        curr_data_est += curr_data_est_i
+
+        line_lists.append(line_list)
+        silhouettes.append(results.silhouette[filtered_index])
+
+        n_peaks += len(line_list)
+
+        print(f'Found {len(line_list)} peaks. Total: {n_peaks} peaks.')
+
+    line_lists = np.r_[line_lists]
+    line_list = np.concatenate(line_lists)
+    silhouettes = np.r_[silhouettes]
+
+    rmse = calculate_freq_domain_rmse(data=curr_data_est, params_est=line_list, dwell=dwell)
+
+    return IterativeLlcKbdmResult(
+        line_list=line_list,
+        line_lists=line_lists,
+        silhouettes=silhouettes,
+        rmse=rmse
     )
 
 
@@ -225,12 +293,6 @@ def _cluster_line_lists(data, samples, transf_samples, eps, min_samples):
         clustered_silhouettes.append(
             np.average(sample_silhouette_values[cluster])
         )
-        #     [
-        #         ,
-        #         np.average(sample_silhouette_values[cluster]),
-        #         np.std(sample_silhouette_values[cluster])
-        #     ]
-        # )
 
     non_clustered = np.nonzero(labels == -1)
 
@@ -247,6 +309,7 @@ def _cluster_line_lists(data, samples, transf_samples, eps, min_samples):
         summarized_line_list=summarized_line_list,
         clustered_silhouettes=clustered_silhouettes,
     )
+
 
 def _summarize_clusters(samples, clusters, summarizer=None):
     """

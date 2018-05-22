@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from llckbdm.sampling import filter_samples
-from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists
+from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists, iterative_llc_kbdm
 
 
 def test_transform_line_lists(params_brain_sim, dwell):
@@ -77,3 +77,7 @@ def test_llc_kbdm_should_raise_value_error_if_m_range_is_invalid(data_brain_sim,
             m_range=[1],
         )
     assert "size of 'm_range' must be greater than 2" in str(except_info.value)
+
+
+def test_iterative_llc_kbdm(data_brain_sim, dwell):
+    iterative_llc_kbdm(data=data_brain_sim, dwell=dwell, m_range=range(180, 190))
