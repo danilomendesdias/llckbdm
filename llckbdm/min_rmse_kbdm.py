@@ -27,26 +27,30 @@ def min_rmse_kbdm(data, dwell, m_range=None, l=None, samples=None):
             l=l,
             q=0,
             p=1,
-            gep_solver='svd',
             filter_invalid_features=True
         )
 
     rmses = []
 
     for i, line_list in enumerate(samples):
-        rmse = calculate_freq_domain_rmse(data=data, params_est=line_list, dwell=dwell)
+        if len(line_list) > 0:
+            rmse = calculate_freq_domain_rmse(data=data, params_est=line_list, dwell=dwell)
+        else:
+            rmse = np.inf
 
         rmses.append(rmse)
         logger.debug('RMSE for sample #%d: %f', i, rmse)
 
-    min_index = np.argmin(rmses)
-    min_rmse = rmses[min_index]
-    min_rmse_params_est = samples[min_index]
+    if len(rmses) > 0:
+        min_index = np.argmin(rmses)
+        min_rmse = rmses[min_index]
+        min_rmse_params_est = samples[min_index]
 
-    return MinRmseKbdmResult(
-        line_list=min_rmse_params_est,
-        min_rmse=min_rmse,
-        min_index=min_index,
-        samples=samples,
-        rmses_list=rmses
-    )
+        return MinRmseKbdmResult(
+            line_list=min_rmse_params_est,
+            min_rmse=min_rmse,
+            min_index=min_index,
+            samples=samples,
+            rmses_list=rmses
+        )
+    return None

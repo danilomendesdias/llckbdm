@@ -3,19 +3,42 @@ import logging
 import hdbscan
 import attr
 import numpy as np
+from sklearn.metrics import silhouette_samples
 
+from llckbdm.sig_gen import multi_fid, gen_t_freq_arrays
 from llckbdm.min_rmse_kbdm import min_rmse_kbdm
 from llckbdm.sampling import sample_kbdm, filter_samples
+from llckbdm.metrics import calculate_freq_domain_rmse
 
 logger = logging.getLogger(__name__)
+
 
 @attr.s
 class LlcKbdmResult:
     line_list = attr.ib()
     rmse = attr.ib()
+    silhouette = attr.ib()
 
 
-def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
+@attr.s
+class IterativeLlcKbdmResult:
+    line_list = attr.ib()
+    line_lists = attr.ib()
+    rmse = attr.ib()
+    silhouettes = attr.ib()
+
+
+@attr.s
+class ClusteringResult:
+    num_clusters = attr.ib()
+    labels = attr.ib()
+    clustered = attr.ib()
+    non_clustered = attr.ib()
+    summarized_line_list = attr.ib()
+    clustered_silhouettes = attr.ib()
+
+
+def llc_kbdm(data, dwell, m_range, p=1, l=None, q=None):
     """
     Compute Line List Clustering Krylov Basis Diagonalization Method (LLC-KBDM).
 
@@ -28,11 +51,6 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
     :param list|range m_range:
         Range or list with number of columns/rows of U matrices for iteration of KBDM sampling.
         Its size must be greater than 2.
-
-    :param str gep_solver:
-        Method used to solve Generalized Eigenvalue Problem. Can be 'svd', for self-implemented solution; or scipy
-        to use eig function from scipy.linalg.eig.
-        Default is 'svd'.
 
     :param int p:
         Eigenvalue exponent of the generalized eigenvalue equation. It will represent a 'shift' during the construction
@@ -60,7 +78,6 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         dwell=dwell,
         m_range=m_range,
         p=p,
-        gep_solver=gep_solver,
         l=l,
         q=q,
     )
@@ -72,32 +89,106 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
 
     transf_line_list = _transform_line_lists(samples, dwell)
 
-    summarized_line_lists = []
-
     m_range_size = len(m_range)
 
-    for min_samples in range(int(np.ceil(0.10 * m_range_size )), m_range_size):
+    clustering_results = []
+
+    for min_samples in range(int(np.ceil(0. * m_range_size + 1)), m_range_size):
         logger.debug('HDBSCAN with min_samples = %d', min_samples)
 
-        num_clusters, labels, clustered, non_clustered = _cluster_line_lists(
-            data=data,
-            samples=transf_line_list,
-            eps=0.01,
+        clustering_result = _cluster_line_lists(
+            samples=samples,
+            transf_samples=transf_line_list,
             min_samples=min_samples
         )
 
-        summarized_line_list = _summarize_clusters(
-            samples=samples,
-            clusters=clustered,
+        if clustering_result.num_clusters > 0:
+            clustering_results.append(clustering_result)
+            logger.debug("Can't find clusters with these specifications")
+
+    summarized_line_lists = [
+        cl_result.summarized_line_list for cl_result in clustering_results
+    ]
+
+    min_rmse_kbdm_results = min_rmse_kbdm(
+        data=data,
+        dwell=dwell,
+        samples=summarized_line_lists
+    )
+
+    if min_rmse_kbdm_results is None:
+        return LlcKbdmResult(
+            line_list=[],
+            rmse=[],
+            silhouette=[],
         )
 
-        summarized_line_lists.append(summarized_line_list)
-
-    min_rmse_kbdm_results = min_rmse_kbdm(data=data, dwell=dwell, samples=summarized_line_lists)
+    silhouette = np.array(
+        clustering_results[min_rmse_kbdm_results.min_index].clustered_silhouettes
+    )
 
     return LlcKbdmResult(
         line_list=min_rmse_kbdm_results.line_list,
-        rmse=min_rmse_kbdm_results.min_rmse
+        rmse=min_rmse_kbdm_results.min_rmse,
+        silhouette=silhouette
+    )
+
+
+def iterative_llc_kbdm(
+        data, dwell, m_range, p=1, l=None, q=None, max_iterations=5, silhouette_threshold=0.6
+):
+    if max_iterations < 1:
+        raise ValueError("'max_iterations must be greater than zero")
+
+    curr_data_est = np.zeros_like(data)
+
+    line_lists = []
+    silhouettes = []
+
+    t_array, _ = gen_t_freq_arrays(N=len(data), dwell=dwell)
+
+    n_peaks = 0
+
+    silhouette_thresholds = np.linspace(silhouette_threshold, 0, max_iterations)
+
+    for i in range(max_iterations):
+        print(f'Iteration #{i}')
+        curr_res = data - curr_data_est
+
+        results = llc_kbdm(data=curr_res, dwell=dwell, m_range=m_range, p=p, l=l, q=q)
+
+        if len(results.line_list) == 0:
+            logging.info('No more peaks can be fitted. Stopping.')
+            break
+
+        filtered_index = np.nonzero(
+            (results.silhouette > np.percentile(results.silhouette, silhouette_thresholds[i]))
+        )
+
+        line_list = results.line_list[filtered_index]
+
+        curr_data_est_i = multi_fid(t_array=t_array, params=line_list)
+
+        curr_data_est += curr_data_est_i
+
+        line_lists.append(line_list)
+        silhouettes.append(results.silhouette[filtered_index])
+
+        n_peaks += len(line_list)
+
+        print(f'Found {len(line_list)} peaks. Total: {n_peaks} peaks.')
+
+    line_lists = np.r_[line_lists]
+    line_list = np.concatenate(line_lists)
+    silhouettes = np.r_[silhouettes]
+
+    rmse = calculate_freq_domain_rmse(data=curr_data_est, params_est=line_list, dwell=dwell)
+
+    return IterativeLlcKbdmResult(
+        line_list=line_list,
+        line_lists=line_lists,
+        silhouettes=silhouettes,
+        rmse=rmse
     )
 
 
@@ -163,7 +254,7 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _cluster_line_lists(data, samples, eps, min_samples):
+def _cluster_line_lists(samples, transf_samples, min_samples):
     """
     Use DBSCAN to cluster samples.
 
@@ -185,19 +276,46 @@ def _cluster_line_lists(data, samples, eps, min_samples):
     #cl = DBSCAN(eps=eps, min_samples=min_samples)
     cl = hdbscan.HDBSCAN(min_samples=min_samples)
 
-    cl.fit(samples)
+    cl.fit(transf_samples)
     labels = cl.labels_
 
     num_clusters = len(set(labels) - {-1})
 
     clustered = []
 
-    for cluster_label in range(num_clusters):
-        clustered.append(np.nonzero(labels == cluster_label))
+    if num_clusters > 0:
 
-    non_clustered = np.nonzero(labels == -1)
+        sample_silhouette_values = silhouette_samples(transf_samples, labels)
+        clustered_silhouettes = []
 
-    return num_clusters, labels, clustered, non_clustered
+        for cluster_label in range(num_clusters):
+            cluster = np.nonzero(labels == cluster_label)
+
+            clustered.append(cluster)
+
+            clustered_silhouettes.append(
+                np.average(sample_silhouette_values[cluster])
+            )
+
+        non_clustered = np.nonzero(labels == -1)
+
+        summarized_line_list = _summarize_clusters(
+            samples=samples,
+            clusters=clustered,
+        )
+    else:
+        non_clustered = []
+        summarized_line_list = []
+        clustered_silhouettes = []
+
+    return ClusteringResult(
+        num_clusters=num_clusters,
+        labels=labels,
+        clustered=clustered,
+        non_clustered=non_clustered,
+        summarized_line_list=summarized_line_list,
+        clustered_silhouettes=clustered_silhouettes,
+    )
 
 
 def _summarize_clusters(samples, clusters, summarizer=None):
@@ -218,12 +336,12 @@ def _summarize_clusters(samples, clusters, summarizer=None):
     line_list = []
 
     if summarizer is None:
-        #summarizer = np.average
-        summarizer = np.median
+        summarizer = np.average
+        #summarizer = np.median
 
     for cluster in clusters:
         cluster_samples = samples[cluster]
-        cluster_samples[:,1] = 1 / cluster_samples[:,1]
+        cluster_samples[:, 1] = 1 / cluster_samples[:, 1]
         summarized_cluster = summarizer(cluster_samples, axis=0)
         summarized_cluster[1] = 1 / summarized_cluster[1]
         # summarized_cluster = np.average(cluster_samples, axis=0)

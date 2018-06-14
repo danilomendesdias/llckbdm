@@ -24,7 +24,6 @@ def test_sample_kbdm(data_brain_sim, dwell):
         dwell=dwell,
         m_range=m_range,
         p=1,
-        gep_solver='svd',
         l=None,
         q=0,
         filter_invalid_features=False
@@ -59,8 +58,8 @@ def test_filter_samples_should_filter_invalid_kbdm_lines_for_data_without_noise(
     params_brain_sim = params_brain_sim[params_brain_sim[:, 0].argsort()]
     filtered_samples = filtered_samples[filtered_samples[:, 0].argsort()]
 
-    assert filtered_samples[0] == pytest.approx(params_brain_sim[0], rel=0.01)
-    assert filtered_samples[-1] == pytest.approx(params_brain_sim[-1], rel=0.01)
+    assert filtered_samples[0] == pytest.approx(params_brain_sim[0], abs=0.01)
+    assert filtered_samples[-1] == pytest.approx(params_brain_sim[-1], abs=0.01)
 
 
 def test_filter_samples_should_not_crash_for_empty_input():
