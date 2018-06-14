@@ -38,7 +38,7 @@ class ClusteringResult:
     clustered_silhouettes = attr.ib()
 
 
-def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
+def llc_kbdm(data, dwell, m_range, p=1, l=None, q=None):
     """
     Compute Line List Clustering Krylov Basis Diagonalization Method (LLC-KBDM).
 
@@ -51,11 +51,6 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
     :param list|range m_range:
         Range or list with number of columns/rows of U matrices for iteration of KBDM sampling.
         Its size must be greater than 2.
-
-    :param str gep_solver:
-        Method used to solve Generalized Eigenvalue Problem. Can be 'svd', for self-implemented solution; or scipy
-        to use eig function from scipy.linalg.eig.
-        Default is 'svd'.
 
     :param int p:
         Eigenvalue exponent of the generalized eigenvalue equation. It will represent a 'shift' during the construction
@@ -83,7 +78,6 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         dwell=dwell,
         m_range=m_range,
         p=p,
-        gep_solver=gep_solver,
         l=l,
         q=q,
     )
@@ -99,18 +93,18 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
 
     clustering_results = []
 
-    for min_samples in range(int(np.ceil(0.10 * m_range_size)), m_range_size):
+    for min_samples in range(int(np.ceil(0. * m_range_size + 1)), m_range_size):
         logger.debug('HDBSCAN with min_samples = %d', min_samples)
 
         clustering_result = _cluster_line_lists(
-            data=data,
             samples=samples,
             transf_samples=transf_line_list,
-            eps=0.01,
             min_samples=min_samples
         )
 
-        clustering_results.append(clustering_result)
+        if clustering_result.num_clusters > 0:
+            clustering_results.append(clustering_result)
+            logger.debug("Can't find clusters with these specifications")
 
     summarized_line_lists = [
         cl_result.summarized_line_list for cl_result in clustering_results
@@ -121,6 +115,13 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
         dwell=dwell,
         samples=summarized_line_lists
     )
+
+    if min_rmse_kbdm_results is None:
+        return LlcKbdmResult(
+            line_list=[],
+            rmse=[],
+            silhouette=[],
+        )
 
     silhouette = np.array(
         clustering_results[min_rmse_kbdm_results.min_index].clustered_silhouettes
@@ -134,10 +135,10 @@ def llc_kbdm(data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None):
 
 
 def iterative_llc_kbdm(
-        data, dwell, m_range, gep_solver='svd', p=1, l=None, q=None, max_iterations=5, silhouette_threshold=0.6
+        data, dwell, m_range, p=1, l=None, q=None, max_iterations=5, silhouette_threshold=0.6
 ):
-
-    assert max_iterations >= 1
+    if max_iterations < 1:
+        raise ValueError("'max_iterations must be greater than zero")
 
     curr_data_est = np.zeros_like(data)
 
@@ -148,23 +149,23 @@ def iterative_llc_kbdm(
 
     n_peaks = 0
 
-    threshoulds = np.linspace(75, 0, max_iterations)
+    silhouette_thresholds = np.linspace(silhouette_threshold, 0, max_iterations)
 
     for i in range(max_iterations):
         print(f'Iteration #{i}')
         curr_res = data - curr_data_est
 
-        results = llc_kbdm(data=curr_res, dwell=dwell, m_range=m_range, gep_solver=gep_solver, p=p, l=l, q=q)
+        results = llc_kbdm(data=curr_res, dwell=dwell, m_range=m_range, p=p, l=l, q=q)
+
+        if len(results.line_list) == 0:
+            logging.info('No more peaks can be fitted. Stopping.')
+            break
 
         filtered_index = np.nonzero(
-            (results.silhouette > np.percentile(results.silhouette, threshoulds[i]))
+            (results.silhouette > np.percentile(results.silhouette, silhouette_thresholds[i]))
         )
 
         line_list = results.line_list[filtered_index]
-
-        if len(line_list) == 0:
-            logging.info('No more peaks can be fitted. Stopping.')
-            break
 
         curr_data_est_i = multi_fid(t_array=t_array, params=line_list)
 
@@ -253,7 +254,7 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _cluster_line_lists(data, samples, transf_samples, eps, min_samples):
+def _cluster_line_lists(samples, transf_samples, min_samples):
     """
     Use DBSCAN to cluster samples.
 
@@ -282,24 +283,30 @@ def _cluster_line_lists(data, samples, transf_samples, eps, min_samples):
 
     clustered = []
 
-    sample_silhouette_values = silhouette_samples(transf_samples, labels)
-    clustered_silhouettes = []
+    if num_clusters > 0:
 
-    for cluster_label in range(num_clusters):
-        cluster = np.nonzero(labels == cluster_label)
+        sample_silhouette_values = silhouette_samples(transf_samples, labels)
+        clustered_silhouettes = []
 
-        clustered.append(cluster)
+        for cluster_label in range(num_clusters):
+            cluster = np.nonzero(labels == cluster_label)
 
-        clustered_silhouettes.append(
-            np.average(sample_silhouette_values[cluster])
+            clustered.append(cluster)
+
+            clustered_silhouettes.append(
+                np.average(sample_silhouette_values[cluster])
+            )
+
+        non_clustered = np.nonzero(labels == -1)
+
+        summarized_line_list = _summarize_clusters(
+            samples=samples,
+            clusters=clustered,
         )
-
-    non_clustered = np.nonzero(labels == -1)
-
-    summarized_line_list = _summarize_clusters(
-        samples=samples,
-        clusters=clustered,
-    )
+    else:
+        non_clustered = []
+        summarized_line_list = []
+        clustered_silhouettes = []
 
     return ClusteringResult(
         num_clusters=num_clusters,

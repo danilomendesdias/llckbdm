@@ -24,7 +24,6 @@ def test_sample_kbdm(data_brain_sim, dwell):
         dwell=dwell,
         m_range=m_range,
         p=1,
-        gep_solver='svd',
         l=None,
         q=0,
         filter_invalid_features=False
