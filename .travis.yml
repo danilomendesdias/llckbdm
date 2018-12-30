@@ -2,6 +2,7 @@ language: python
 python:
 - '3.6'
 install:
+- pip install cython==0.29.2
 - pip install -r requirements.txt
 - pip install codecov
 script:
