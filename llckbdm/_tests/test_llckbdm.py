@@ -35,12 +35,8 @@ def test_inverse_transform_line_lists(params_brain_sim, dwell):
 def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N):
     m_range = range(250, 260, 1)
 
-    noise = np.random.randn(N) + 1j * np.random.randn(N)
-    noise = noise * 1e-4
-    data = data_brain_sim + noise
-
     results = llc_kbdm(
-        data=data,
+        data=data_brain_sim,
         dwell=dwell,
         m_range=m_range,
         p=1,
@@ -55,9 +51,8 @@ def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N):
 
     est_data = multi_fid(t_array, line_list)
 
-    est_data_fft = np.fft.fftshift(np.fft.fft(est_data))
-
-    assert np.std(est_data.real - data.real) < 1e-3
+    assert np.std(est_data.real - data_brain_sim.real) < 1e-3
+    assert np.std(est_data.imag - data_brain_sim.imag) < 1e-3
 
 
 def test_llc_kbdm_should_raise_value_error_if_m_range_is_invalid(data_brain_sim, dwell):
