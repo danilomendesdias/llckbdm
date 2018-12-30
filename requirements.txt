@@ -5,6 +5,6 @@ pytest==4.0.2
 pytest-cov==2.6.0
 scikit-learn==0.20.2
 attrs==18.2.0
+cython==0.29.2
 hdbscan==0.8.18
 matplotlib==3.0.2
-cython==0.29.2
