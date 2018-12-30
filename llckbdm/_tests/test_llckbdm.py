@@ -1,10 +1,9 @@
 import pytest
 import numpy as np
+from llckbdm.sig_gen import multi_fid
 
-from llckbdm.sampling import filter_samples, sample_kbdm
-from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists, \
-    _cluster_line_lists
-
+from llckbdm.sampling import filter_samples
+from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists, iterative_llc_kbdm
 
 
 def test_transform_line_lists(params_brain_sim, dwell):
@@ -33,11 +32,11 @@ def test_inverse_transform_line_lists(params_brain_sim, dwell):
     assert params_brain_sim == pytest.approx(_inverse_transform_line_lists(transf_line_lists, dwell))
 
 
-def test_llc_kbdm(data_brain_sim, dwell, params_brain_sim, N):
+def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N):
     m_range = range(250, 260, 1)
 
     noise = np.random.randn(N) + 1j * np.random.randn(N)
-    noise = noise * 1e-5
+    noise = noise * 1e-4
     data = data_brain_sim + noise
 
     results = llc_kbdm(
@@ -54,21 +53,11 @@ def test_llc_kbdm(data_brain_sim, dwell, params_brain_sim, N):
 
     assert len(line_list) == len(params_brain_sim)
 
-    for i, param in enumerate(params_brain_sim):
-        a_i, t2_i, f_i, ph_i = param[0], param[1], param[2], param[3]
+    est_data = multi_fid(t_array, line_list)
 
-        for j, est_param in enumerate(line_list):
-            est_a_i, est_t2_i, est_f_i, est_ph_i = est_param[0], est_param[1], est_param[2], est_param[3]
+    est_data_fft = np.fft.fftshift(np.fft.fft(est_data))
 
-            valid_a = est_a_i == pytest.approx(a_i, rel=0.3)
-            valid_t2 = est_t2_i == pytest.approx(t2_i, rel=0.5)
-            valid_f = est_f_i == pytest.approx(f_i, rel=0.03)
-            valid_ph = est_ph_i == pytest.approx(ph_i, abs=0.01)
-
-            if valid_a and valid_t2 and valid_f and valid_ph:
-                break
-            elif j + 1 == len(line_list):
-                assert False, f'peak #{i} has failed in the test: {param}'
+    assert np.std(est_data.real - data.real) < 1e-3
 
 
 def test_llc_kbdm_should_raise_value_error_if_m_range_is_invalid(data_brain_sim, dwell):
@@ -79,3 +68,7 @@ def test_llc_kbdm_should_raise_value_error_if_m_range_is_invalid(data_brain_sim,
             m_range=[1],
         )
     assert "size of 'm_range' must be greater than 2" in str(except_info.value)
+
+
+def test_iterative_llc_kbdm(data_brain_sim, dwell):
+    iterative_llc_kbdm(data=data_brain_sim, dwell=dwell, m_range=range(180, 190))

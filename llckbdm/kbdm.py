@@ -24,7 +24,7 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
     :param float dwell:
         Dwell time in seconds.
 
-    :param int m:
+    :param int|TypeNone m:
         Number of columns/rows of U matrices.
         Default is n = len(data) / 2.
 
@@ -33,7 +33,7 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
         of U^p and U^{p-1} matrices.
         Default is 1.
 
-    :param int l:
+    :param int|TypeNone l:
         ..see:: _solve_gep_svd
         If set to None, default is m.
         Default is None (m).

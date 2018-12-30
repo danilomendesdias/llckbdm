@@ -5,7 +5,7 @@ from llckbdm.kbdm import kbdm
 logger = logging.getLogger(__name__)
 
 
-def sample_kbdm(data, dwell, m_range, p, gep_solver, l, q=0, filter_invalid_features=True):
+def sample_kbdm(data, dwell, m_range, p, l, q=0, filter_invalid_features=True):
     """
     Compute samples of multiple computations of KBDM in a given range of m values.
 
@@ -28,12 +28,12 @@ def sample_kbdm(data, dwell, m_range, p, gep_solver, l, q=0, filter_invalid_feat
         Eigenvalue exponent of the generalized eigenvalue equation. It will represent a 'shift' during the construction
         of U^p and U^{p-1} matrices.
 
-    :param int l:
+    :param int|TypeNone l:
         This is used only with if gep_solver is set to 'svd'.
         ..see:: llckbdm.kbdm._solve_gep_svd
         Default is None.
 
-    :param int q:
+    :param float q:
         This is used only with if gep_solver is set to 'svd'.
         ..see:: llckbdm.kbdm._solve_gep_svd
         Default is 0.
@@ -60,11 +60,14 @@ def sample_kbdm(data, dwell, m_range, p, gep_solver, l, q=0, filter_invalid_feat
             l=l,
             q=q,
         )
+
         if filter_invalid_features:
             line_list = filter_samples(line_list)
 
-        line_lists.append(line_list)
-        infos.append(info)
+        if len(line_list) > 0:
+            logger.debug(f'Empty line list')
+            line_lists.append(line_list)
+            infos.append(info)
 
     return line_lists, infos
 
