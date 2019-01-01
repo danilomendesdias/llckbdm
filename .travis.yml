@@ -1,14 +1,16 @@
 language: python
 python:
-- '3.6'
+  - '3.6'
+before_install:
+  - git submodule update --init --recursive
 install:
-- pip install cython==0.29.2
-- pip install -r requirements.txt
-- pip install codecov
+  - pip install cython==0.29.2
+  - pip install -r requirements.txt
+  - pip install codecov
 script:
-- py.test --cov=llckbdm
+  - py.test --cov=llckbdm
 after_success:
-- codecov
+  - codecov
 #deploy:
 #  provider: pypi
 #  user: danilomendesdias

@@ -1,8 +1,12 @@
+#include "kbdm.hpp"
 #include <iostream>
 
-using namespace std;
 
 int main() {
-    cout << "Hello world" << endl;
+    std::cout << hello("World") << std::endl;
     return 0;
+}
+
+std::string hello(std::string name) {
+    return "Hello, " + name;
 }
