@@ -1,8 +1,9 @@
 language: python
+git:
+  submodules:
+    true
 python:
   - '3.6'
-before_install:
-  - git submodule update --init --recursive
 install:
   - pip install cython==0.29.2
   - pip install -r requirements.txt
