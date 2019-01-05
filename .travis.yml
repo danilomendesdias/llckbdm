@@ -1,7 +1,7 @@
 os:
   - osx
   - linux
-
+dist: xenial
 language: generic
 git:
   submodules:
