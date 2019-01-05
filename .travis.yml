@@ -9,7 +9,10 @@ git:
 python:
   - '3.6'
 before_install:
-  - pip install --upgrade pip
+  - pip3 install --upgrade pip
+  - pip3 install virtualenv
+  - virtualenv .env -p python3
+  - source .env/bin/activate
   - pip install cython==0.29.2
 install:
   - pip install -r requirements.txt
