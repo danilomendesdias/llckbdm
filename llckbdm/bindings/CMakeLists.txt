@@ -1,24 +1,27 @@
 add_library(_bindings MODULE _bindings.cpp)
 
-target_link_libraries(_bindings PRIVATE pybind11::module)
+if(DEFINED ENV{CONDA_PREFIX})
+    target_link_libraries(
+        _bindings PRIVATE
+        pybind11::module
+        Eigen3::Eigen
+    )
+else()
+    target_link_libraries(
+        _bindings PRIVATE
+        pybind11::module
+    )
+endif()
 
-set_target_properties(_bindings PROPERTIES
+set_target_properties(
+    _bindings PROPERTIES
         PREFIX ""
-        SUFFIX "${python_extension}")
-
-set_target_properties(_bindings PROPERTIES OUTPUT_NAME _bindings)
+)
 
 if(SKBUILD)
+    message("Scikit-build detected.")
     install(TARGETS _bindings LIBRARY DESTINATION llckbdm)
 else()
-    if(WIN32)
-        set(python_extension ".pyd")
-    elseif(APPLE)
-        set(python_extension ".dynlib")
-    else()
-        set(python_extension ".so")
-    endif()
-
     install(
         TARGETS _bindings
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/llckbdm
