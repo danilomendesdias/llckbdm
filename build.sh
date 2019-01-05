@@ -1,1 +1,1 @@
-mkdir build && cd build && cmake .. && make install
+mkdir build && cd build && cmake .. && make install && cd ..
