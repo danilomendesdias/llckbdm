@@ -13,6 +13,7 @@ install:
 script:
   - python setup.py test
   - cd .. && python -c "import llckbdm.bindings" && cd llckbdm
+  - pytest --cov=llckbdm
 after_success:
   - codecov
 #deploy:
