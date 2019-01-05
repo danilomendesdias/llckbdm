@@ -9,6 +9,8 @@ git:
 python:
   - '3.6'
 before_install:
+  - pyenv install -s 3.6.7
+  - pyenv global 3.6.7
   - pip install virtualenv
   - virtualenv .env -p python3
   - source .env/bin/activate
