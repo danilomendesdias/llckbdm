@@ -8,8 +8,10 @@ git:
     true
 python:
   - '3.6'
-install:
+before_install:
+  - pip install --upgrade pip
   - pip install cython==0.29.2
+install:
   - pip install -r requirements.txt
   - pip install codecov
   - source build.sh
