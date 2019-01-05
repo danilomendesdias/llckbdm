@@ -10,9 +10,9 @@ install:
   - pip install codecov
   - python setup.py install
 script:
-  - py.test --cov=llckbdm
-after_success:
-  - codecov
+  - python setup.py test
+#after_success:
+#  - codecov
 #deploy:
 #  provider: pypi
 #  user: danilomendesdias

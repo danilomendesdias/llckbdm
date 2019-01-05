@@ -34,7 +34,9 @@ def main():
         python_requires='>=3.6',
 
         install_requires=['numpy', 'scipy', 'pandas'],
-        test_requires=['pytest'],
+
+        setup_requires=["pytest-runner"],
+        tests_require=["pytest", "pytest-cov", "codecov"],
 
         data_files=[
             ('data', ['data/params_brain_sim_1_5T.csv'])
