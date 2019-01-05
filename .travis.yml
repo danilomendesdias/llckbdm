@@ -1,3 +1,7 @@
+os:
+  - osx
+  - linux
+
 language: python
 git:
   submodules:
@@ -11,9 +15,9 @@ install:
   - source build.sh
   - python setup.py install
 script:
+  - pytest --cov=llckbdm
   - python setup.py test
   - cd .. && python -c "import llckbdm.bindings" && cd llckbdm
-  - pytest --cov=llckbdm
 after_success:
   - codecov
 #deploy:
