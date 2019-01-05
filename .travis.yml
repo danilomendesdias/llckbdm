@@ -9,10 +9,10 @@ install:
   - pip install -r requirements.txt
   - pip install codecov
   - source build.sh
-script:
-  - py.test
   - python setup.py install
-  - cd .. && python -c "import llckbdm.bindings"
+script:
+  - python setup.py test
+  - cd .. && python -c "import llckbdm.bindings" && cd llckbdm
 after_success:
   - codecov
 #deploy:

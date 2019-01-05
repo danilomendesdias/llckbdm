@@ -33,7 +33,7 @@ def main():
         license='MIT',
         python_requires='>=3.6',
 
-        install_requires=['numpy', 'scipy', 'pandas'],
+        install_requires=['cython', 'numpy', 'scipy', 'pandas', 'sklearn', 'hdbscan'],
 
         setup_requires=["pytest-runner"],
         tests_require=["pytest", "pytest-cov", "codecov"],
