@@ -2,7 +2,7 @@ os:
   - osx
   - linux
 
-language: python
+language: generic
 git:
   submodules:
     true
