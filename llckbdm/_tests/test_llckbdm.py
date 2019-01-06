@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 import numpy as np
 from llckbdm.sig_gen import multi_fid
@@ -65,5 +67,9 @@ def test_llc_kbdm_should_raise_value_error_if_m_range_is_invalid(data_brain_sim,
     assert "size of 'm_range' must be greater than 2" in str(except_info.value)
 
 
+@pytest.mark.xfail(
+    condition=sys.platform.startwith('darwin'),
+    reason='Reported in https://github.com/danilomendesdias/llckbdm/issues/19'
+)
 def test_iterative_llc_kbdm(data_brain_sim, dwell):
     iterative_llc_kbdm(data=data_brain_sim, dwell=dwell, m_range=range(180, 190))
