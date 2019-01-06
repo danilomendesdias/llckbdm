@@ -9,6 +9,8 @@ if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
+set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+
 if(DEFINED ENV{CONDA_PREFIX})
     message("Conda enviroment detected: $ENV{CONDA_PREFIX}")
     find_package(pybind11 REQUIRED)
