@@ -18,8 +18,12 @@ steps:
       pip install -r requirements.txt
     displayName: 'Install prerequisites'
 
+  - script: mkdir build
+      displayName: Make Build Directory
+
   - task: CMake@1
     inputs:
+      workingDirectory: 'build'
       cmakeArgs: '-A x64'
 
   - task: MSBuild@1
