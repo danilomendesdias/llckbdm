@@ -13,10 +13,19 @@ else()
     )
 endif()
 
-set_target_properties(
-    _bindings PROPERTIES
-        PREFIX ""
-)
+if (WIN32)
+    message("Windows detected. Forcing binding output to be .pyd.")
+    set_target_properties(
+        _bindings PROPERTIES
+            PREFIX ""
+            SUFFIX ".pyd"
+    )
+else()
+    set_target_properties(
+            _bindings PROPERTIES
+            PREFIX ""
+    )
+endif()
 
 if(SKBUILD)
     message("Scikit-build detected.")
