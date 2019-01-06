@@ -1,36 +1,48 @@
 os:
   - osx
   - linux
+  -
 dist: xenial
+
 language: generic
+
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+
 git:
   submodules:
     true
+
 python:
   - '3.6'
+
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then brew upgrade pyenv;
     fi
   - pyenv install -s 3.6.7
   - pyenv global 3.6.7
+  - pip install --upgrade pip
   - pip install virtualenv
   - virtualenv .env -p python3
   - source .env/bin/activate
   - python --version
-  - pip install --upgrade pip
-  - pip install cython==0.29.2
+  - pip install cython ninja cmake codecov scikit-build
+
 install:
   - pip install -r requirements.txt
-  - pip install codecov
   - source build.sh
   - python setup.py install
+
 script:
   - pytest --cov=llckbdm
   - python setup.py test
   - cd .. && python -c "import llckbdm.bindings" && cd llckbdm
+
 after_success:
   - codecov
+
 #deploy:
 #  provider: pypi
 #  user: danilomendesdias
