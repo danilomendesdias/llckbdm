@@ -18,6 +18,8 @@ steps:
       pip install -r requirements.txt
     displayName: 'Install prerequisites'
 
+  - task: CMake@1
+
   - script: |
       python setup.py install
       python setup.py test
