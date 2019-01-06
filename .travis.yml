@@ -31,7 +31,7 @@ before_install:
   - virtualenv .env -p python3
   - source .env/bin/activate
   - python --version
-  - pip install cython ninja cmake codecov scikit-build pytest==4.0.2 pytest-cov==2.6.0
+  - pip install cython ninja cmake codecov scikit-build pytest<4.1 pytest-cov
 
 install:
   - pip install -r requirements.txt
