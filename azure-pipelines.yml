@@ -20,8 +20,8 @@ steps:
 
   - task: CMake@1
     inputs:
-      - workingDirectory: 'build'
-      - cmakeArgs: '-A x64'
+      workingDirectory: 'build'
+      cmakeArgs: '-A x64'
 
   - task: MSBuild@1
     inputs:
