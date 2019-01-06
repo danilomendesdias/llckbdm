@@ -3,7 +3,6 @@ pool:
 
 variables:
   pythonVersion: '3.6'
-  platform: 'x64'
 
 steps:
   - checkout: self
@@ -23,11 +22,13 @@ steps:
     inputs:
       - workingDirectory: 'build'
       - cmakeArgs: '-A x64'
+
   - task: MSBuild@1
-      inputs:
-        solution: 'build/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        platform: 'x64'
+    inputs:
+      solution: 'build/ALL_BUILD.vcxproj'
+      maximumCpuCount: true
+      platform: 'x64'
+
   - script: |
       py.test
     displayName: 'Testing'
