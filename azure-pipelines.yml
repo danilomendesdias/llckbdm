@@ -19,7 +19,7 @@ steps:
     displayName: 'Install prerequisites'
 
   - script: mkdir build
-      displayName: Make Build Directory
+    displayName: Make Build Directory
 
   - task: CMake@1
     inputs:
