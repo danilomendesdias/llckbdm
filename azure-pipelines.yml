@@ -10,15 +10,15 @@ steps:
       versionSpec: '$(pythonVersion)'
       architecture: 'x64'
 
-- script: |
+  - script: |
     python -m pip install --upgrade pip cython ninja cmake codecov scikit-build virtualenv
     pip install -r requirements.txt
-  displayName: 'Install prerequisites'
+    displayName: 'Install prerequisites'
 
-- script: |
+  - script: |
     python setup.py install
     python setup.py test
     cd ..
     python -c "import llckbdm.bindings"
     cd llckbdm
-  displayName: 'python setup.py install'
+    displayName: 'python setup.py install'
