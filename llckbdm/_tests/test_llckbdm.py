@@ -68,7 +68,7 @@ def test_llc_kbdm_should_raise_value_error_if_m_range_is_invalid(data_brain_sim,
 
 
 @pytest.mark.xfail(
-    condition=sys.platform.startwith('darwin'),
+    condition=sys.platform.startswith('darwin'),
     reason='Reported in https://github.com/danilomendesdias/llckbdm/issues/19'
 )
 def test_iterative_llc_kbdm(data_brain_sim, dwell):
