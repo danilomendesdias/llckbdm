@@ -25,6 +25,13 @@ steps:
     inputs:
       workingDirectory: 'build'
       cmakeArgs: '-A x64 ..'
+    displayName: CMake build
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '--build . --target install'
+    displayName: CMake install
 
   - task: MSBuild@1
     inputs:
