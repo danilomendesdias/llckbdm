@@ -1,18 +1,56 @@
-language: python
+os:
+  - linux
+  - osx
+
+dist: xenial
+
+language: generic
+
+before_cache:
+  - brew cleanup
+
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+
+git:
+  submodules:
+    true
+
 python:
-- '3.6'
+  - '3.6'
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
+    then brew upgrade pyenv;
+    fi
+  - pyenv install -s 3.6.7
+  - pyenv global 3.6.7
+  - pip install --upgrade pip
+  - pip install virtualenv
+  - virtualenv .env -p python3
+  - source .env/bin/activate
+  - python --version
+  - pip install cython ninja cmake codecov scikit-build pytest-cov "pytest<4.1"
+
 install:
-- pip install -r requirements.txt
-- pip install codecov
+  - pip install -r requirements.txt
+  - source build.sh
+  - python setup.py install
+
 script:
-- py.test --cov=llckbdm
+  - pytest --cov=llckbdm
+  - python setup.py test
+  - cd .. && python -c "import llckbdm.bindings" && cd llckbdm
+
 after_success:
-- codecov
-deploy:
-  provider: pypi
-  user: danilomendesdias
-  password:
-    secure: exS9ys3+vFt1JY/tnJdpjuQ8G5D8RagmZXI69AqcFaKkFa46JYDeyKmXEYIq9Ys/rE3A3GyeVaD4B7SGg3fTeJmOillFZVA4RtDyAfOdLZtN7DRuKaInZzOKfnYmjENioR0V8C1BeDS7XG28Hc4igpMWwqfU0G6qL3vYyMjmNDAkQmdk05FfgNCY0ecDFNoh0+2/qr6HV804oL3fSgQPB8qfS0uh+GnTnVv214ogmBo8YGMBrpzbdY8q9DSWcAgwVGp0zJIzGE7xnsQ0u05cwXIRrJmtPr1T01Gp3RwtghSq8p2KbZCCu52rheQjRlDquFd6pN6gkNtyc6teO46GGM5r0njVzYpCUKC65m1XSupP9atu7tmvceKMe1Blo62Hx9EUVOw6UMWlci5ytZ3U8qHGtFC1biqayS3s63atFHwyXgzLOndEbCX8Gr/cJ4vdEvy/PUyvOGtH8Vt+omnBhHPHej6R0KxRnG9RBhS97Gn4d/TXNkqR7jj1Bpjg0EidLX+yKmknffBwgnPI57dOLOZTdbUIZrO0yO3Yl8JfP1rrKD+mpqbkfB1oW6a1AI/3LznK8efRgtMz1OGpf6B2TagMVZHsOv8WtLMq04NCd0ccumbKcmVxL6+0T88UI5kS8PqkfdKe2tqzGqikx0zm3331gSUc33Ci15Wx2F0S6C0=
-  on:
-    tags: true
-    branch: master
+  - codecov
+
+#deploy:
+#  provider: pypi
+#  user: danilomendesdias
+#  password:
+#    secure: exS9ys3+vFt1JY/tnJdpjuQ8G5D8RagmZXI69AqcFaKkFa46JYDeyKmXEYIq9Ys/rE3A3GyeVaD4B7SGg3fTeJmOillFZVA4RtDyAfOdLZtN7DRuKaInZzOKfnYmjENioR0V8C1BeDS7XG28Hc4igpMWwqfU0G6qL3vYyMjmNDAkQmdk05FfgNCY0ecDFNoh0+2/qr6HV804oL3fSgQPB8qfS0uh+GnTnVv214ogmBo8YGMBrpzbdY8q9DSWcAgwVGp0zJIzGE7xnsQ0u05cwXIRrJmtPr1T01Gp3RwtghSq8p2KbZCCu52rheQjRlDquFd6pN6gkNtyc6teO46GGM5r0njVzYpCUKC65m1XSupP9atu7tmvceKMe1Blo62Hx9EUVOw6UMWlci5ytZ3U8qHGtFC1biqayS3s63atFHwyXgzLOndEbCX8Gr/cJ4vdEvy/PUyvOGtH8Vt+omnBhHPHej6R0KxRnG9RBhS97Gn4d/TXNkqR7jj1Bpjg0EidLX+yKmknffBwgnPI57dOLOZTdbUIZrO0yO3Yl8JfP1rrKD+mpqbkfB1oW6a1AI/3LznK8efRgtMz1OGpf6B2TagMVZHsOv8WtLMq04NCd0ccumbKcmVxL6+0T88UI5kS8PqkfdKe2tqzGqikx0zm3331gSUc33Ci15Wx2F0S6C0=
+#  on:
+#    tags: true
+#    branch: master

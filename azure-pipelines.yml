@@ -3,3 +3,46 @@ pool:
 
 variables:
   pythonVersion: '3.6'
+
+steps:
+  - checkout: self
+    submodules: true
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(pythonVersion)'
+      architecture: 'x64'
+
+  - script: |
+      python -m pip install --upgrade pip cython ninja cmake codecov scikit-build virtualenv pytest==4.0.2 pytest-cov==2.6.0
+      pip install -r requirements.txt
+    displayName: 'Install prerequisites'
+
+  - script: mkdir build
+    displayName: Make Build Directory
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '-A x64 ..'
+    displayName: CMake build
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '--build . --target install'
+    displayName: CMake install
+
+  - script: |
+      py.test
+    displayName: 'Testing'
+
+  - script: |
+      call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+      set CXX=cl
+      set CC=cl
+      python setup.py install
+    displayName: 'python setup.py install'
+
+  - script: python setup.py test
+    displayName: 'python setup.py test'

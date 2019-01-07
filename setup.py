@@ -1,4 +1,5 @@
-from setuptools import setup, find_packages
+from skbuild import setup
+from setuptools import find_packages
 from codecs import open
 from os import path
 
@@ -32,8 +33,10 @@ def main():
         license='MIT',
         python_requires='>=3.6',
 
-        install_requires=['numpy', 'scipy', 'pandas'],
-        test_requires=['pytest'],
+        install_requires=['cython', 'numpy', 'scipy', 'pandas', 'sklearn', 'hdbscan'],
+
+        setup_requires=["pytest-runner"],
+        tests_require=["pytest", "pytest-cov", "codecov"],
 
         data_files=[
             ('data', ['data/params_brain_sim_1_5T.csv'])
