@@ -33,20 +33,14 @@ steps:
       cmakeArgs: '--build . --target install'
     displayName: CMake install
 
-  - task: MSBuild@1
-    inputs:
-      solution: 'build/ALL_BUILD.vcxproj'
-      maximumCpuCount: true
-      platform: 'x64'
-
   - script: |
       py.test
     displayName: 'Testing'
 
-  - script: |
-      python setup.py install
-      python setup.py test
-      cd ..
-      python -c "import llckbdm.bindings"
-      cd llckbdm
-    displayName: 'python setup.py install'
+#  - script: |
+#      python setup.py install
+#      python setup.py test
+#      cd ..
+#      python -c "import llckbdm.bindings"
+#      cd llckbdm
+#    displayName: 'python setup.py install'
