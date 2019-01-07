@@ -37,10 +37,13 @@ steps:
       py.test
     displayName: 'Testing'
 
-#  - script: |
-#      python setup.py install
-#      python setup.py test
-#      cd ..
-#      python -c "import llckbdm.bindings"
-#      cd llckbdm
-#    displayName: 'python setup.py install'
+  - script: |
+      call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+      set CXX=cl
+      set CC=cl
+      python setup.py install
+      python setup.py test
+      cd ..
+      python -c "import llckbdm.bindings"
+      cd llckbdm
+    displayName: 'python setup.py install'
