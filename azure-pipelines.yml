@@ -50,5 +50,4 @@ steps:
   - script: |
       cd ..
       python -c "import llckbdm.bindings"
-      cd llckbdm
     displayName: 'testing bindings import'
