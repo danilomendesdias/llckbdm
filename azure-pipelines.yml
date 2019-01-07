@@ -42,8 +42,13 @@ steps:
       set CXX=cl
       set CC=cl
       python setup.py install
-      python setup.py test
+    displayName: 'python setup.py install'
+
+  - script: python setup.py test
+    displayName: 'python setup.py test'
+
+  - script: |
       cd ..
       python -c "import llckbdm.bindings"
       cd llckbdm
-    displayName: 'python setup.py install'
+    displayName: 'testing bindings import'
