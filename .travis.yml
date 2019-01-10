@@ -6,13 +6,6 @@ dist: xenial
 
 language: generic
 
-before_cache:
-  - brew cleanup
-
-cache:
-  directories:
-    - $HOME/Library/Caches/Homebrew
-
 git:
   submodules:
     true
@@ -21,17 +14,15 @@ python:
   - '3.6'
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
-    then brew upgrade pyenv;
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]];
+    then pyenv install -s 3.6.7 && pyenv global 3.6.7;
     fi
-  - pyenv install -s 3.6.7
-  - pyenv global 3.6.7
-  - pip install --upgrade pip
-  - pip install virtualenv
+  - pip3 install --upgrade pip
+  - pip3 install virtualenv
   - virtualenv .env -p python3
   - source .env/bin/activate
   - python --version
-  - pip install cython ninja cmake codecov scikit-build pytest-cov "pytest<4.1"
+  - pip install cython ninja cmake codecov scikit-build pytest-cov pytest
 
 install:
   - pip install -r requirements.txt

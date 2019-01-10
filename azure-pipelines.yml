@@ -14,7 +14,7 @@ steps:
       architecture: 'x64'
 
   - script: |
-      python -m pip install --upgrade pip cython ninja cmake codecov scikit-build virtualenv pytest==4.0.2 pytest-cov==2.6.0
+      python -m pip install --upgrade pip cython ninja cmake codecov scikit-build virtualenv pytest pytest-cov
       pip install -r requirements.txt
     displayName: 'Install prerequisites'
 
