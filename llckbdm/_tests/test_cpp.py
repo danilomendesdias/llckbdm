@@ -1,5 +1,5 @@
-from llckbdm.bindings import add
+from llckbdm.bindings import kbdm
 
 
-def test_add():
-    assert add(1, 2) == 3
+def test_hello():
+    assert kbdm('world') == 'Hello, world'

@@ -22,5 +22,4 @@ else()
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third/eigen")
 endif()
 
-add_subdirectory(llckbdm/cpp)
 add_subdirectory(llckbdm/bindings)

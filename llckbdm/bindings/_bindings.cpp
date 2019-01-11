@@ -1,12 +1,9 @@
 #include <pybind11/pybind11.h>
+#include "kbdm/kbdm.hpp"
 #include <Eigen/Dense>
 
-int add(int i, int j) {
-    return i + j;
-}
+using namespace llckbdm;
 
 PYBIND11_MODULE(_bindings, m) {
-    m.doc() = "pybind11 example plugin"; // optional module docstring
-
-    m.def("add", &add, "A function which adds two numbers");
+    m.def("kbdm", &kbdm, "A function to say hello");
 }

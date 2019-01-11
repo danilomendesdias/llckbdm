@@ -1,1 +1,1 @@
-from llckbdm._bindings import add
+from llckbdm._bindings import kbdm

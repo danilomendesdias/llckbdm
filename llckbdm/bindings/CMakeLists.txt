@@ -1,4 +1,12 @@
+add_library(kbdm INTERFACE)
+
+target_include_directories(kbdm INTERFACE
+    "${PROJECT_SOURCE_DIR}/kbdm"
+)
+
 add_library(_bindings MODULE _bindings.cpp)
+
+target_link_libraries(_bindings INTERFACE kbdm)
 
 if(DEFINED ENV{CONDA_PREFIX})
     target_link_libraries(
