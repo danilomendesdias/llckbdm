@@ -42,7 +42,7 @@ def params_brain_sim(df_params_brain_sim):
 
 @pytest.fixture
 def data_brain_sim(df_params_brain_sim, t):
-    data = sig_gen.multi_fid(t, df_params_brain_sim.as_matrix())
+    data = sig_gen.multi_fid(t, df_params_brain_sim.values)
 
     return data
 

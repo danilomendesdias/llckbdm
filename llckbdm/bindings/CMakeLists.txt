@@ -46,3 +46,8 @@ else()
         ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/llckbdm
     )
 endif()
+
+if(DEFINED ENV{TESTING})
+    add_executable(main kbdm/main.cpp)
+    target_link_libraries(main Eigen3::Eigen)
+endif()
