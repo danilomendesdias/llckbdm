@@ -1,13 +1,13 @@
 #ifndef __HPP_KBDM__
 #define __HPP_KBDM__
 
+#define _USE_MATH_DEFINES
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <Eigen/Eigenvalues>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <tuple>
 #include <exception>
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 using namespace Eigen;
