@@ -7,6 +7,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <tuple>
 #include <exception>
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 using namespace Eigen;
