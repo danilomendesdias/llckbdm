@@ -2,10 +2,10 @@ find_path(MKL_INCLUDE_DIR NAMES mkl.h HINTS $ENV{CONDA_PREFIX}/include)
 
 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
 
-set(COR_LIB "libmkl_core.dylib")
-set(RT_LIB "libmkl_rt.dylib")
-set(SEQ "libmkl_sequential.dylib")
-set(ILP "libmkl_intel_ilp64.dylib")
+set(COR_LIB libmkl_core${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(RT_LIB libmkl_rt${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(SEQ libmkl_sequential${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(ILP libmkl_intel_ilp64${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 find_library(MKL_CORE_LIBRARY
         NAMES ${COR_LIB}
