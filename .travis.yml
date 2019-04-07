@@ -41,7 +41,7 @@ install:
 script:
   - pytest --cov=llckbdm
   - python setup.py test
-  - cd .. && python -c "import llckbdm.bindings" && cd llckbdm
+  - cd .. && python -c "import llckbdm._bindings" && cd llckbdm
 
 after_success:
   - codecov
