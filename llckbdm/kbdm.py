@@ -43,8 +43,9 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
         Default is 0.
 
     :return:
+        # @TODO: Update.
         Spectrum Line Lists Estimations inside tuples with the following order: (Amplitude, T2, Frequency, Phase).
-    :rtype: tuple(numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray)
+    :rtype: tuple(numpy.ndarray[l, 4], KbdmInfo)
     """
     if m is None and l is None:
         raise ValueError("l or m must be specified")
@@ -67,7 +68,10 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
     info = KbdmInfo(m=m, p=p, l=l, q=q, singular_values=svd_info['singular_values'])
 
     # Complex amplitude calculations
-    D_sqrt = B_norm @ data[:m]
+    D_sqrt = data[:m] @ B_norm
+
+    assert D_sqrt.shape == (l,)
+
     D = D_sqrt * D_sqrt
 
     # real amplitudes and phases
@@ -80,6 +84,7 @@ def kbdm(data, dwell, m=None, p=1, l=None, q=0):
     F = np.real(Ω) / (2 * np.pi)
     T2 = 1. / np.imag(Ω)
 
+    # @TODO: this is a not a good return type. Fix and update docs.
     line_list = np.column_stack(
         (A, T2, F, PH,)
     )
@@ -101,7 +106,7 @@ def _compute_U_matrices(data, m, p):
         ..see:: kbdm
 
     :return: U^0, U^{p-1} and U^p matrices, each one with dimensionality m x m.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray, numpy.ndarray)
+    :rtype: tuple(numpy.ndarray[m,m], numpy.ndarray[m,m], numpy.ndarray[m,m])
     """
     U0 = np.empty((m, m), dtype=np.complex)
     Up_1 = np.empty((m, m), dtype=np.complex)
@@ -152,7 +157,7 @@ def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
         Default is 0.
 
     :return: computed eigenvalues (μ) and normalized eigenvectors (B)
-    :rtype: tuple(numpy.ndarray, numpy.ndarray)
+    :rtype: tuple(numpy.ndarray[l], numpy.ndarray[m,l])
     """
     m = len(U0)
 
@@ -195,9 +200,17 @@ def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
     # U diagonalization (mu are the final eigenvalues!)
     μ, P = eig(U)
 
+    assert μ.shape == (l,), f'Shape of B is {μ.shape} rather than {(m, l)}'
+
     # Obtaining eigenvectors at krylov basis
+    # Each one of the l eigenvectors Bk with m elements is a column of B (m x l)
     B = R_ @ Dsqi_ @ P
+
+    assert B.shape == (m, l), f'Shape of B is {B.shape} rather than {(m, l)}'
+
     B_norm = _normalize_eigenvectors(B, U0)
+
+    assert B_norm.shape == (m, l), f'Shape of B_norm is {B_norm.shape} rather than {(m, l)}'
 
     svd_info = {
         'singular_values': s,
@@ -212,7 +225,7 @@ def _normalize_eigenvectors(B, U0):
     """
     Apply normalization on each column of B matrix (B_k), such that:
 
-    B_k^{norm} = B_k (B_k^T U0 B_k)^{-1}
+    B_k^{norm} = B_k (B_k^T U0 B_k)^{-1/2}
 
     :param numpy.ndarray B:
         Eigenvector matrix.
@@ -221,13 +234,16 @@ def _normalize_eigenvectors(B, U0):
         U^0 matrix.
         ..see:: _compute_U_matrices
 
-    :return:
+    :return: Normalized B_norm matrix, with same dimensions of B.
+    :rtype: numpy.array[m,l]
     """
     # normalization factor for eigenvectors
     N_inv_sqrt = np.einsum('jk,ij,ik->k', B, U0, B)
-    N_sqrt = np.sqrt(1./N_inv_sqrt)
+    N_sqrt = np.sqrt(1. / N_inv_sqrt)
 
     # Normalized eigenvectors calculations
-    B_norm = (B * N_sqrt).T
+    B_norm = B * N_sqrt
+
+    assert B_norm.shape == B.shape
 
     return B_norm

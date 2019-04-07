@@ -43,8 +43,8 @@ def test_kbdm_svd(data_brain_sim, dwell, df_params_brain_sim, columns):
 
 
 def test_compute_U_matrices(data_brain_sim):
-    m = 1000
-    p = 11
+    m = 300
+    p = 2
 
     U0, Up_1, Up = _compute_U_matrices(data=data_brain_sim, m=m, p=p)
 
@@ -106,7 +106,7 @@ def test_kbdm_invalid_m_n_p_constraint_should_raise_value_error(data_brain_sim, 
 def test_kbdm_svd_with_q_greater_than_zero_should_use_tikhonov_regularization(data_brain_sim, dwell, caplog):
     caplog.set_level('DEBUG')
 
-    m = 100
+    m = 10
 
     params_est, info = kbdm(
         data_brain_sim,

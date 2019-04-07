@@ -94,3 +94,5 @@ cmake-build-release/
 
 # scikit-build
 _skbuild
+.vscode/.cmaketools.json
+.vscode/settings.json
