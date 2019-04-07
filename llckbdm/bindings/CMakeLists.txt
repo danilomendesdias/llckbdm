@@ -1,17 +1,20 @@
 add_library(_bindings MODULE _bindings.cpp)
 
-if(DEFINED ENV{CONDA_PREFIX})
-    target_link_libraries(
+
+
+set(LINK_TARGETS
         _bindings PRIVATE
         pybind11::module
-        Eigen3::Eigen
-    )
-else()
-    target_link_libraries(
-        _bindings PRIVATE
-        pybind11::module
-    )
-endif()
+        ${MKL_CORE_LIBRARY}
+)
+
+if (TARGET Eigen3::Eigen)
+    list(APPEND LINK_TARGETS Eigen3::Eigen)
+endif ()
+
+target_link_libraries(
+    ${LINK_TARGETS}
+)
 
 if (WIN32)
     message("Windows detected. Forcing binding output to be .pyd.")
