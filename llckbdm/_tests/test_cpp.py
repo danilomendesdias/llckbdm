@@ -122,6 +122,8 @@ def test_solve_svd(m):
     assert L.shape == (m, m)
     assert R.shape == (m, m)
 
+    assert expected_L @ np.conjugate(expected_L).transpose() == pytest.approx(np.identity(m))
+
     assert s == pytest.approx(expected_s)
 
     assert np.abs(L) == pytest.approx(np.abs(expected_L))
