@@ -1,7 +1,5 @@
-#ifndef __HPP_KBDM__
-#define __HPP_KBDM__
-
 #define _USE_MATH_DEFINES
+#include "kbdm.hpp"
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <Eigen/Eigenvalues>
@@ -12,19 +10,8 @@
 
 using namespace Eigen;
 
-auto I = std::complex<double>(0., 1.);
-
 namespace llckbdm
 {
-
-std::tuple<MatrixXcd, MatrixXcd, MatrixXcd>
-_compute_U_matrices(VectorXcd const &data, int m, int p);
-
-std::tuple<VectorXcd, MatrixXcd>
-_solve_gep_svd(MatrixXcd const& U0, MatrixXcd const& Up_1, MatrixXcd const& Up, int l, double q);
-
-MatrixXcd
-_normalize_eigenvectors(MatrixXcd const &B, MatrixXcd const &U0);
 
 std::tuple<ArrayXd, ArrayXd, ArrayXd, ArrayXd>
 kbdm(
@@ -32,8 +19,8 @@ kbdm(
     double dwell,
     int m,
     int l,
-    double q = 0.0,
-    int p = 1
+    double q,
+    int p
 )
 {
     auto[U0, Up_1, Up] = _compute_U_matrices(data, m, p);
@@ -162,5 +149,3 @@ _normalize_eigenvectors(MatrixXcd const &B, MatrixXcd const &U0)
 }
 
 } // namespace llckbdm
-
-#endif //__HPP_KBDM__

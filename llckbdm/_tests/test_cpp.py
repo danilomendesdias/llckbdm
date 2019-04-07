@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy.linalg import svd, eig
 
-from llckbdm.bindings import (
+from llckbdm._bindings import (
     kbdm as kbdm_cpp, _compute_U_matrices, _solve_gep_svd as _solve_gep_svd_cpp,
     _normalize_eigenvectors as _normalize_eigenvectors_cpp,
     _solve_svd,
