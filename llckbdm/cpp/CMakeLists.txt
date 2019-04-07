@@ -37,7 +37,7 @@ message("Preparing targets to be inside: ${LLCKBDM_LIB_PATH}")
 
 if(SKBUILD)
     message("Scikit-build detected.")
-    install(TARGETS _bindings LIBRARY DESTINATION ${LLCKBDM_LIB_PATH})
+    install(TARGETS _bindings LIBRARY DESTINATION llckbdm)
 #     install(TARGETS _kbdm LIBRARY DESTINATION ${LLCKBDM_LIB_PATH})
 else()
     install(
