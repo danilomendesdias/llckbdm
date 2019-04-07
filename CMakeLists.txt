@@ -46,7 +46,6 @@ else()
     set(Eigen3_DIR ${PROJECT_SOURCE_DIR}/third/eigen)
     include_directories(${Eigen3_DIR})
     add_subdirectory(third/pybind11)
-
 endif()
 
 if (MKL_FOUND)

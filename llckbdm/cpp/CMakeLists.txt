@@ -1,6 +1,8 @@
 # add_library(_kbdm SHARED kbdm.cpp)
 
-set(LINK_TARGETS Eigen3::Eigen)
+if (TARGET Eigen3::Eigen)
+    set(LINK_TARGETS Eigen3::Eigen)
+endif()
 
 if (MKL_FOUND)
     add_definitions(-DEIGEN_USE_LAPACKE)
