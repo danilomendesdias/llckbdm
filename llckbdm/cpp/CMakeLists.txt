@@ -1,18 +1,13 @@
-# add_library(_kbdm SHARED kbdm.cpp)
-
 if (TARGET Eigen3::Eigen)
     set(LINK_TARGETS Eigen3::Eigen)
 endif()
 
-if (MKL_FOUND)
-    add_definitions(-DEIGEN_USE_LAPACKE)
-    list(APPEND LINK_TARGETS ${MKL_LIBRARIES})
-endif ()
-
-# target_link_libraries(
-#         _kbdm
-#         ${LINK_TARGETS}
-# )
+# @TODO: MKL is broken.
+##if (MKL_FOUND)
+#    message("Enabling MKL...")
+#    add_definitions(-DEIGEN_USE_LAPACKE)
+#    list(APPEND LINK_TARGETS ${MKL_LIBRARIES})
+##endif ()
 
 pybind11_add_module(_bindings MODULE kbdm.cpp _bindings.cpp)
 
@@ -40,7 +35,6 @@ message("Preparing targets to be inside: ${LLCKBDM_LIB_PATH}")
 if(SKBUILD)
     message("Scikit-build detected.")
     install(TARGETS _bindings LIBRARY DESTINATION llckbdm)
-#     install(TARGETS _kbdm LIBRARY DESTINATION ${LLCKBDM_LIB_PATH})
 else()
     install(
             TARGETS _bindings
@@ -48,11 +42,4 @@ else()
             LIBRARY DESTINATION ${LLCKBDM_LIB_PATH}
             ARCHIVE DESTINATION ${LLCKBDM_LIB_PATH}
     )
-
-#     install(
-#             TARGETS _kbdm
-#             RUNTIME DESTINATION ${LLCKBDM_LIB_PATH}
-#             LIBRARY DESTINATION ${LLCKBDM_LIB_PATH}
-#             ARCHIVE DESTINATION ${LLCKBDM_LIB_PATH}    
-#         )
 endif()

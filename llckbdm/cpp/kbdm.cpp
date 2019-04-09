@@ -1,5 +1,5 @@
-#define _USE_MATH_DEFINES
 #include "kbdm.hpp"
+#include "constants.hpp"
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <Eigen/Eigenvalues>
@@ -15,17 +15,16 @@ namespace llckbdm
 
 std::tuple<ArrayXd, ArrayXd, ArrayXd, ArrayXd>
 kbdm(
-    VectorXcd const &data,
+    VectorConstRef data,
     double dwell,
     int m,
     int l,
-    double q,
     int p
 )
 {
     auto[U0, Up_1, Up] = _compute_U_matrices(data, m, p);
 
-    auto[mu, B_norm] = _solve_gep_svd(U0, Up_1, Up, l, q);
+    auto[mu, B_norm] = _solve_gep_svd(U0, Up_1, Up, l);
 
     auto D_sqrt = (B_norm.transpose() * data.block(0, 0, m, 1)).eval();
 
@@ -34,17 +33,17 @@ kbdm(
     ArrayXd A = D.abs();
     ArrayXd PH = D.arg();
 
-    ArrayXcd Omega = -I * mu.array().log() / dwell;
+    ArrayXcd Omega = -constants::I * mu.array().log() / dwell;
 
-    ArrayXd F = Omega.real() / (2 * M_PI);
+    ArrayXd F = Omega.real() / (2 * constants::π);
 
-    ArrayXd T2 = Omega.imag().inverse();
+    ArrayXd T2 = 1. / Omega.imag();
 
     return std::make_tuple(A, T2, F, PH);
 }
 
 std::tuple<MatrixXcd, MatrixXcd, MatrixXcd>
-_compute_U_matrices(VectorXcd const &data, int m, int p)
+_compute_U_matrices(VectorConstRef data, int m, int p)
 {
     auto U0 = MatrixXcd(m, m);
     auto Up = MatrixXcd(m, m);
@@ -64,9 +63,9 @@ _compute_U_matrices(VectorXcd const &data, int m, int p)
 }
 
 std::tuple<MatrixXcd, VectorXd, MatrixXcd>
-_solve_svd(MatrixXcd const &Up_1)
+_solve_svd(MatrixConstRef Up_1)
 {
-    auto bcd_svd_solver = BDCSVD<MatrixXcd>(Up_1, ComputeThinU | ComputeThinV);
+    auto bcd_svd_solver = Eigen::BDCSVD<Eigen::MatrixXcd>(Up_1, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
     MatrixXcd L = bcd_svd_solver.matrixU();
     VectorXd s = bcd_svd_solver.singularValues();
@@ -76,7 +75,7 @@ _solve_svd(MatrixXcd const &Up_1)
 }
 
 std::tuple<VectorXcd, MatrixXcd>
-_solve_eig(MatrixXcd const &U)
+_solve_eig(MatrixConstRef U)
 {
     auto eigen_solver = ComplexEigenSolver<MatrixXcd>(U);
 
@@ -87,21 +86,21 @@ _solve_eig(MatrixXcd const &U)
 }
 
 MatrixXcd
-_compute_U(MatrixXcd const& Dsqi_, MatrixXcd const& L_h_, MatrixXcd const& Up, MatrixXcd const& R_)
+_compute_U(MatrixConstRef Dsqi_, MatrixConstRef L_h_, MatrixConstRef Up, MatrixConstRef R_)
 {
 
     return Dsqi_ * L_h_ * Up * R_ * Dsqi_;
 }
 
 MatrixXcd
-_compute_B(MatrixXcd const& R_, MatrixXcd const& Dsqi_, MatrixXcd const& P)
+_compute_B(MatrixConstRef R_, MatrixConstRef Dsqi_, MatrixConstRef P)
 {
 // Obtaining eigenvectors at krylov basis
     return R_ * Dsqi_ * P;
 }
 
 std::tuple<MatrixXcd, MatrixXcd, MatrixXcd>
-_compute_reduced_matrices(MatrixXcd const& L, VectorXd const& s, MatrixXcd const& R, int m, int l)
+_compute_reduced_matrices(MatrixConstRef L, VectorXd const& s, MatrixConstRef R, int m, int l)
 {
     MatrixXcd Dsqi = s.cwiseSqrt().cwiseInverse().asDiagonal();
 
@@ -114,7 +113,7 @@ _compute_reduced_matrices(MatrixXcd const& L, VectorXd const& s, MatrixXcd const
 
 
 std::tuple<VectorXcd, MatrixXcd>
-_solve_gep_svd(MatrixXcd const& U0, MatrixXcd const& Up_1, MatrixXcd const& Up, int l, double q)
+_solve_gep_svd(MatrixConstRef U0, MatrixConstRef Up_1, MatrixConstRef Up, int l)
 {
     auto m = U0.rows();
 
@@ -134,18 +133,17 @@ _solve_gep_svd(MatrixXcd const& U0, MatrixXcd const& Up_1, MatrixXcd const& Up, 
 }
 
 MatrixXcd
-_normalize_eigenvectors(MatrixXcd const &B, MatrixXcd const &U0)
+_normalize_eigenvectors(MatrixXcd B, MatrixConstRef U0)
 {
     auto l = B.cols();
 
-    auto B_norm = B;
-
     for (auto k = 0; k < l; ++k)
     {
-        B_norm.col(k) = B.col(k) * ((B.col(k).transpose() * U0 * B.col(k)).inverse().sqrt());
+        auto norm_factor = std::sqrt((B.col(k).transpose() * U0 * B.col(k)).value());
+        B.col(k) = B.col(k) / norm_factor;
     }
 
-    return B_norm;
+    return B;
 }
 
 } // namespace llckbdm

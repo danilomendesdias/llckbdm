@@ -26,7 +26,7 @@ def l():
 
 
 def test_kbdm_cpp(data_brain_sim, m, l, dwell, df_params_brain_sim):
-    A, T2, F, PH = kbdm_cpp(data_brain_sim, dwell, m, l, 0.0, 1)
+    A, T2, F, PH = kbdm_cpp(data_brain_sim, dwell, m, l, 1)
 
     df_params_estimated = pd.DataFrame(
         data=np.column_stack((A, T2, F, PH)),
@@ -39,24 +39,36 @@ def test_kbdm_cpp(data_brain_sim, m, l, dwell, df_params_brain_sim):
     assert df_params_estimated.values == pytest.approx(df_params_brain_sim.values)
 
 
-def test_kbdm(data_brain_sim, m, l, dwell):
-    kbdm(
+def test_kbdm(data_brain_sim, m, l, dwell, df_params_brain_sim):
+    line_list, _ = kbdm(
         data_brain_sim,
         dwell,
         m=m,
         l=l
     )
 
+    A, T2, F, PH = np.column_stack(line_list)
+
+    df_params_estimated = pd.DataFrame(
+        data=np.column_stack((A, T2, F, PH)),
+        columns=df_params_brain_sim.columns
+    )
+
+    df_params_estimated = df_params_estimated.query('amplitude > 1e-3')
+    df_params_estimated.sort_values(by=['frequency'], inplace=True)
+
+    assert df_params_estimated.values == pytest.approx(df_params_brain_sim.values)
+
+
 
 @pytest.mark.xfail(reason="To be investigated")
 def test_solve_gep_svd(data_brain_sim, m, l):
     p = 1
-    q = 0.0
 
     U0, Up_1, Up = _compute_U_matrices(data_brain_sim, m, p)
-    expected_mu, expected_B, _ = _solve_gep_svd(U0, Up_1, Up, l, q)
+    expected_mu, expected_B, _ = _solve_gep_svd(U0, Up_1, Up, l)
 
-    mu, B = _solve_gep_svd_cpp(U0, Up_1, Up, l, q)
+    mu, B = _solve_gep_svd_cpp(U0, Up_1, Up, l)
 
     assert mu.shape == (l,)
     assert B.shape == (m, l)
