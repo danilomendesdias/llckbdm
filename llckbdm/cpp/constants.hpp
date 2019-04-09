@@ -6,8 +6,8 @@
 
 namespace llckbdm {
 namespace constants {
-    inline constexpr auto π = M_PI;
-    inline constexpr auto I = std::complex<double>(0., 1.);
+    constexpr auto pi = M_PI;
+    constexpr auto I = std::complex<double>(0., 1.);
 }  // namespace llckbdm
 }  // namespace constants
 

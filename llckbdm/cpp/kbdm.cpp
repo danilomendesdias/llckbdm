@@ -35,7 +35,7 @@ kbdm(
 
     ArrayXcd Omega = -constants::I * mu.array().log() / dwell;
 
-    ArrayXd F = Omega.real() / (2 * constants::π);
+    ArrayXd F = Omega.real() / (2 * constants::pi);
 
     ArrayXd T2 = 1. / Omega.imag();
 

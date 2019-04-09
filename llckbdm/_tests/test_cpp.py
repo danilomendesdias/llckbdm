@@ -39,28 +39,6 @@ def test_kbdm_cpp(data_brain_sim, m, l, dwell, df_params_brain_sim):
     assert df_params_estimated.values == pytest.approx(df_params_brain_sim.values)
 
 
-def test_kbdm(data_brain_sim, m, l, dwell, df_params_brain_sim):
-    line_list, _ = kbdm(
-        data_brain_sim,
-        dwell,
-        m=m,
-        l=l
-    )
-
-    A, T2, F, PH = np.column_stack(line_list)
-
-    df_params_estimated = pd.DataFrame(
-        data=np.column_stack((A, T2, F, PH)),
-        columns=df_params_brain_sim.columns
-    )
-
-    df_params_estimated = df_params_estimated.query('amplitude > 1e-3')
-    df_params_estimated.sort_values(by=['frequency'], inplace=True)
-
-    assert df_params_estimated.values == pytest.approx(df_params_brain_sim.values)
-
-
-
 @pytest.mark.xfail(reason="To be investigated")
 def test_solve_gep_svd(data_brain_sim, m, l):
     p = 1
