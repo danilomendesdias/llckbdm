@@ -25,7 +25,6 @@ endif()
 if(APPLE)
     message("Apple detected")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.10)
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc")
 endif()
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -48,9 +47,7 @@ else()
     add_subdirectory(third/pybind11)
 endif()
 
-if (MKL_FOUND)
-    message("MKL_FOUND: ${MKL_LIBRARIES}")
-endif()
+
 message("-- Eigen3_DIR: " ${Eigen3_DIR})
 message("-- pybind11_DIR: " ${pybind11_DIR})
 

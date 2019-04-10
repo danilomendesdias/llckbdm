@@ -9,41 +9,41 @@ using namespace Eigen;
 namespace llckbdm
 {
 
-constexpr auto I = std::complex<double>(0., 1.);
+typedef const Ref<const MatrixXcd>& MatrixConstRef;
+typedef const Ref<const VectorXcd>& VectorConstRef;
 
 std::tuple<MatrixXcd, MatrixXcd, MatrixXcd>
-_compute_U_matrices(VectorXcd const &data, int m, int p);
+_compute_U_matrices(VectorConstRef data, int m, int p);
 
 std::tuple<VectorXcd, MatrixXcd>
-_solve_gep_svd(MatrixXcd const& U0, MatrixXcd const& Up_1, MatrixXcd const& Up, int l, double q);
+_solve_gep_svd(MatrixConstRef U0, MatrixConstRef Up_1, MatrixConstRef Up, int l);
 
 MatrixXcd
-_normalize_eigenvectors(MatrixXcd const &B, MatrixXcd const &U0);
+_normalize_eigenvectors(MatrixXcd B, MatrixConstRef U0);
 
 std::tuple<ArrayXd, ArrayXd, ArrayXd, ArrayXd>
 kbdm(
-    VectorXcd const &data,
+    VectorConstRef data,
     double dwell,
     int m,
     int l,
-    double q = 0.0,
     int p = 1
 );
 
 std::tuple<MatrixXcd, VectorXd, MatrixXcd>
-_solve_svd(MatrixXcd const &Up_1);
+_solve_svd(MatrixConstRef Up_1);
 
 std::tuple<VectorXcd, MatrixXcd>
-_solve_eig(MatrixXcd const &U);
+_solve_eig(MatrixConstRef U);
 
 MatrixXcd
-_compute_U(MatrixXcd const& Dsqi_, MatrixXcd const& L_h_, MatrixXcd const& Up, MatrixXcd const& R_);
+_compute_U(MatrixConstRef Dsqi_, MatrixConstRef L_h_, MatrixConstRef Up, MatrixConstRef R_);
 
 MatrixXcd
-_compute_B(MatrixXcd const& R_, MatrixXcd const& Dsqi_, MatrixXcd const& P);
+_compute_B(MatrixConstRef R_, MatrixConstRef Dsqi_, MatrixConstRef P);
 
 std::tuple<MatrixXcd, MatrixXcd, MatrixXcd>
-_compute_reduced_matrices(MatrixXcd const& L, VectorXd const& s, MatrixXcd const& R, int m, int l);
+_compute_reduced_matrices(MatrixConstRef L, VectorXd const& s, MatrixConstRef R, int m, int l);
 
 } // namespace llckbdm
 

@@ -37,7 +37,7 @@ def df_params_brain_sim(data_path, columns):
 
 @pytest.fixture
 def params_brain_sim(df_params_brain_sim):
-    return df_params_brain_sim.as_matrix()
+    return df_params_brain_sim.values
 
 
 @pytest.fixture
