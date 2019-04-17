@@ -5,3 +5,8 @@ scikit-learn>=0.20.2
 attrs>=18.2.0
 hdbscan>=0.8.18
 matplotlib>=3.0.2
+scikit-build
+ninja
+cmake
+cython
+pytest
