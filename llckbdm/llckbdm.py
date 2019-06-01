@@ -4,7 +4,7 @@ import hdbscan
 import attr
 import numpy as np
 from sklearn.metrics import silhouette_samples
-
+from sklearn.cluster import KMeans
 from llckbdm.sig_gen import multi_fid, gen_t_freq_arrays
 from llckbdm.min_rmse_kbdm import min_rmse_kbdm
 from llckbdm.sampling import sample_kbdm, filter_samples
@@ -13,32 +13,32 @@ from llckbdm.metrics import calculate_freq_domain_rmse
 logger = logging.getLogger(__name__)
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class LlcKbdmResult:
-    line_list = attr.ib()
-    rmse = attr.ib()
-    silhouette = attr.ib()
+    line_list: list = []
+    rmse: float = None
+    silhouette: list = []
 
 
 @attr.s
 class IterativeLlcKbdmResult:
-    line_list = attr.ib()
-    line_lists = attr.ib()
-    rmse = attr.ib()
-    silhouettes = attr.ib()
+    line_list: np.ndarray = np.array([])
+    line_lists: list = []
+    rmse: float = None
+    silhouettes: list = []
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class ClusteringResult:
-    num_clusters = attr.ib()
-    labels = attr.ib()
-    clustered = attr.ib()
-    non_clustered = attr.ib()
-    summarized_line_list = attr.ib()
-    clustered_silhouettes = attr.ib()
+    num_clusters: int = 0
+    labels: np.ndarray = np.array([])
+    clustered: list = []
+    non_clustered: list = []
+    summarized_line_list: np.ndarray = np.array([])
+    clustered_silhouettes: list = []
 
 
-def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0):
+def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0, method='hdbscan'):
     """
     Compute Line List Clustering Krylov Basis Diagonalization Method (LLC-KBDM).
 
@@ -66,8 +66,11 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0):
         ..see:: llckbdm.kbdm._solve_gep_svd
         Default is 0.
 
-    :return: @TODO
-    :rtype: @TODO
+    :param str method:
+        Clustering method. Can be 'hdbscan' or 'k-means'.
+
+    :return: An object containing final estimations, RMSE values and silhouettes.
+    :rtype: LlcKbdmResult
     """
     if len(m_range) < 2:
         raise ValueError("size of 'm_range' must be greater than 2.")
@@ -93,18 +96,30 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0):
 
     clustering_results = []
 
-    for min_samples in range(int(np.ceil(0. * m_range_size + 1)), m_range_size):
-        logger.debug('HDBSCAN with min_samples = %d', min_samples)
+    if method == 'hdbscan':
+        optimized_parameter = 'min_samples'
+        parameter_range = range(int(np.ceil(0. * m_range_size + 1)), m_range_size)
+    else:
+        assert method == 'k-means', f'Invalid method: {method}'
 
+        optimized_parameter = 'n_clusters'
+        parameter_range = range(2, np.max(m_range))
+
+    for optimized_parameter_value in parameter_range:
         clustering_result = _cluster_line_lists(
             samples=samples,
-            transf_samples=transf_line_list,
-            min_samples=min_samples
+            transformed_samples=transf_line_list,
+            method=method,
+            method_parameters={optimized_parameter: optimized_parameter_value}
         )
+
+        if method == 'k-means':
+            # checking whether the number of clusters trial reached the plateau
+            if clustering_result.num_clusters < optimized_parameter_value:
+                break
 
         if clustering_result.num_clusters > 0:
             clustering_results.append(clustering_result)
-            logger.debug("Can't find clusters with these specifications")
 
     summarized_line_lists = [
         cl_result.summarized_line_list for cl_result in clustering_results
@@ -254,30 +269,35 @@ def _inverse_transform_line_lists(transformed_line_lists, dwell):
     )
 
 
-def _cluster_line_lists(samples, transf_samples, min_samples):
+def _cluster_line_lists(samples, transformed_samples, method, method_parameters):
     """
-    Use DBSCAN to cluster samples.
+    Cluster samples using non-supervised machine learning technique.
 
     :param numpy.ndarray samples:
-        Array containing line lists to be clustered
+        Array containing line lists
 
-    :param eps:
-        ..see:: sklearn.cluster.DBSCAN
+    :param numpy.ndarray samples:
+        Array containing line lists represented in the transformed space
 
-    :param min_samples:
-        ..see:: sklearn.cluster.DBSCAN
+    :param str method:
+        Clustering method. Can be 'hdbscan' or 'k-means'.
+
+    :param dict method_parameters:
+        Clustering method hyper-parameters.
 
     :return: number of estimated clusters, labels for each sample (with same dimensions of samples input),
         list containing labels of each cluster and labels of non-clustered samples.
 
     :rtype: tuple(int, numpy.ndarray, list(tuple), tuple)
     """
+    if method == 'hdbscan':
+        cl_model = hdbscan.HDBSCAN(**method_parameters)
+    else:
+        assert method == 'k-means', 'Invalid method'
+        cl_model = KMeans(**method_parameters)
 
-    #cl = DBSCAN(eps=eps, min_samples=min_samples)
-    cl = hdbscan.HDBSCAN(min_samples=min_samples)
-
-    cl.fit(transf_samples)
-    labels = cl.labels_
+    cl_model.fit(transformed_samples)
+    labels = cl_model.labels_
 
     num_clusters = len(set(labels) - {-1})
 
@@ -285,7 +305,7 @@ def _cluster_line_lists(samples, transf_samples, min_samples):
 
     if num_clusters > 0:
 
-        sample_silhouette_values = silhouette_samples(transf_samples, labels)
+        sample_silhouette_values = silhouette_samples(transformed_samples, labels)
         clustered_silhouettes = []
 
         for cluster_label in range(num_clusters):
@@ -318,7 +338,7 @@ def _cluster_line_lists(samples, transf_samples, min_samples):
     )
 
 
-def _summarize_clusters(samples, clusters, summarizer=None):
+def _summarize_clusters(samples, clusters, summarizer=np.average):
     """
     Compute compact line list from
 
@@ -337,7 +357,6 @@ def _summarize_clusters(samples, clusters, summarizer=None):
 
     if summarizer is None:
         summarizer = np.average
-        #summarizer = np.median
 
     for cluster in clusters:
         cluster_samples = samples[cluster]

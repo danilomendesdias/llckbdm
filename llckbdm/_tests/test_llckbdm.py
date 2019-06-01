@@ -5,7 +5,9 @@ import numpy as np
 from llckbdm.sig_gen import multi_fid
 
 from llckbdm.sampling import filter_samples
-from llckbdm.llckbdm import llc_kbdm, _transform_line_lists, _inverse_transform_line_lists, iterative_llc_kbdm
+from llckbdm.llckbdm import (
+    llc_kbdm, _transform_line_lists, _inverse_transform_line_lists, iterative_llc_kbdm
+)
 
 
 def test_transform_line_lists(params_brain_sim, dwell):
@@ -34,7 +36,10 @@ def test_inverse_transform_line_lists(params_brain_sim, dwell):
     assert params_brain_sim == pytest.approx(_inverse_transform_line_lists(transf_line_lists, dwell))
 
 
-def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N):
+@pytest.mark.parametrize(
+    'method', ['k-means', 'hdbscan']
+)
+def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N, method):
     m_range = range(250, 260, 1)
 
     results = llc_kbdm(
@@ -43,6 +48,7 @@ def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N):
         m_range=m_range,
         p=1,
         l=30,
+        method=method,
     )
 
     line_list = results.line_list
