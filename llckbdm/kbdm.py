@@ -130,7 +130,7 @@ def _compute_U_matrices(data, m, p):
     return U0, Up_1, Up
 
 
-def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
+def _solve_gep_svd(U0, Up_1, Up, l, q=0.0):
     """
     Solve Generalized Eigenvalue Problem (GEP) by reducing it into an ordinary eigenvalue problem through
     Singular Value Decomposition (SVD) of U^{p-1} matrix.
@@ -160,15 +160,6 @@ def _solve_gep_svd(U0, Up_1, Up, l=None, q=0):
     :rtype: tuple(numpy.ndarray[l], numpy.ndarray[m,l])
     """
     m = len(U0)
-
-    if q is None:
-        q = 0
-
-    if l is None:
-        l = m
-
-    if l > m:
-        raise ValueError("l can't be greater than m.")
 
     # Decomposing U0 into singular values.
     # _h suffix denotes hermitian operator.

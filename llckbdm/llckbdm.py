@@ -38,7 +38,7 @@ class ClusteringResult:
     clustered_silhouettes = attr.ib()
 
 
-def llc_kbdm(data, dwell, m_range, p=1, l=None, q=None):
+def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0):
     """
     Compute Line List Clustering Krylov Basis Diagonalization Method (LLC-KBDM).
 
