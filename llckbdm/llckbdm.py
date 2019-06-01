@@ -20,7 +20,7 @@ class LlcKbdmResult:
     silhouette: list = []
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class IterativeLlcKbdmResult:
     line_list: np.ndarray = np.array([])
     line_lists: list = []
