@@ -135,7 +135,7 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0):
 
 
 def iterative_llc_kbdm(
-        data, dwell, m_range, p=1, l=None, q=None, max_iterations=5, silhouette_threshold=0.6
+        data, dwell, m_range, p=1, l=None, q=0.0, max_iterations=5, silhouette_threshold=0.6
 ):
     if max_iterations < 1:
         raise ValueError("'max_iterations must be greater than zero")
