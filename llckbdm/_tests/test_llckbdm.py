@@ -37,10 +37,15 @@ def test_inverse_transform_line_lists(params_brain_sim, dwell):
 
 
 @pytest.mark.parametrize(
-    'method', ['k-means', 'hdbscan']
+    'method, optics_filter', [
+        ('k-means', False),
+        ('k-means', True),
+        ('hdbscan', False),
+        ('hdbscan', True),
+    ]
 )
-def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N, method):
-    m_range = range(250, 260, 1)
+def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N, method, optics_filter):
+    m_range = range(150, 180, 1)
 
     results = llc_kbdm(
         data=data_brain_sim,
@@ -49,6 +54,7 @@ def test_llc_kbdm(t_array, data_brain_sim, dwell, params_brain_sim, N, method):
         p=1,
         l=30,
         method=method,
+        optics_filter=optics_filter,
     )
 
     line_list = results.line_list

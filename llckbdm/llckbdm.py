@@ -4,7 +4,7 @@ import hdbscan
 import attr
 import numpy as np
 from sklearn.metrics import silhouette_samples
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, OPTICS
 from llckbdm.sig_gen import multi_fid, gen_t_freq_arrays
 from llckbdm.min_rmse_kbdm import min_rmse_kbdm
 from llckbdm.sampling import sample_kbdm, filter_samples
@@ -38,7 +38,7 @@ class ClusteringResult:
     clustered_silhouettes: list = []
 
 
-def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0, method='hdbscan'):
+def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0, method='hdbscan', optics_filter=False):
     """
     Compute Line List Clustering Krylov Basis Diagonalization Method (LLC-KBDM).
 
@@ -69,6 +69,10 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0, method='hdbscan'):
     :param str method:
         Clustering method. Can be 'hdbscan' or 'k-means'.
 
+    :param bool optics_filter:
+        Enable clustering pre-filter with OPTICS algorithm. It will remove all dataset features that are not labelled
+        with OPTICS (considered as noise). Recommended with K-means method.
+
     :return: An object containing final estimations, RMSE values and silhouettes.
     :rtype: LlcKbdmResult
     """
@@ -90,7 +94,10 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0, method='hdbscan'):
 
     samples = filter_samples(samples)
 
-    transf_line_list = _transform_line_lists(samples, dwell)
+    transformed_line_list = _transform_line_lists(samples, dwell)
+
+    if optics_filter:
+        samples, transformed_line_list = filter_with_optics(samples, transformed_line_list)
 
     m_range_size = len(m_range)
 
@@ -108,7 +115,7 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0, method='hdbscan'):
     for optimized_parameter_value in parameter_range:
         clustering_result = _cluster_line_lists(
             samples=samples,
-            transformed_samples=transf_line_list,
+            transformed_samples=transformed_line_list,
             method=method,
             method_parameters={optimized_parameter: optimized_parameter_value}
         )
@@ -363,8 +370,23 @@ def _summarize_clusters(samples, clusters, summarizer=np.average):
         cluster_samples[:, 1] = 1 / cluster_samples[:, 1]
         summarized_cluster = summarizer(cluster_samples, axis=0)
         summarized_cluster[1] = 1 / summarized_cluster[1]
-        # summarized_cluster = np.average(cluster_samples, axis=0)
 
         line_list.append(summarized_cluster)
 
     return np.array(line_list)
+
+
+def filter_with_optics(samples, transformed_line_list):
+    filter_model = OPTICS()
+
+    # trying to find clusters structures on both ordinary and transformed space
+    samples_filtered = filter_model.fit(samples).labels_ > 0
+    transformed_samples_filtered = filter_model.fit(transformed_line_list).labels_ > 0
+
+    transformed_line_list = transformed_line_list[samples_filtered | transformed_samples_filtered]
+    samples = samples[samples_filtered | transformed_samples_filtered]
+
+    assert len(transformed_line_list) == len(samples), \
+        'Transformed and ordinary space should have the same output dimension after filtering.'
+
+    return samples, transformed_line_list
