@@ -86,10 +86,12 @@ def filter_samples(samples, amplitude_tol=1e-6):
     :return: filtered samples
     :rtype: numpy.ndarray
     """
-    if samples.size == 0:
+    if len(samples) == 0:
         return samples
 
     amplitude_filter = samples[:, 0] > amplitude_tol
     T2_filter = samples[:, 1] > 0
 
-    return samples[amplitude_filter & T2_filter]
+    filtered_samples = samples[amplitude_filter & T2_filter]
+
+    return filtered_samples
