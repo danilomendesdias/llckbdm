@@ -25,6 +25,8 @@ def main():
             'Topic :: Scientific/Engineering :: Physics',
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
         ],
         keywords='kbdm mrs fitting hip',  
         packages=find_packages(exclude=['contrib', 'docs']),
