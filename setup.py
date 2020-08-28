@@ -11,8 +11,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 def main():
     setup(
         name='llckbdm',  
-        version='v0.2.0',
-        description='Krylov Basis Diagonalization Method implementation in Python', 
+        version='0.2.1',
+        description='Line List Clustering Krylov Basis Diagonalization Method implementation in Python',
         long_description=long_description,  
         long_description_content_type='text/markdown',
         url='https://github.com/danilomendesdias/llckbdm',  
@@ -28,12 +28,12 @@ def main():
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
         ],
-        keywords='kbdm mrs fitting hip',  
+        keywords='kbdm mrs fitting hip llckbdm nmr',
         packages=find_packages(exclude=['contrib', 'docs']),
         license='MIT',
         python_requires='>=3.6',
 
-        install_requires=['numpy', 'scipy', 'pandas', 'sklearn', 'hdbscan'],
+        install_requires=['numpy', 'scipy', 'pandas', 'sklearn', 'attrs', 'hdbscan'],
 
         setup_requires=["pytest-runner"],
         tests_require=["pytest", "pytest-cov", "codecov", "pytest-catchlog"],
