@@ -1,13 +1,16 @@
 language: python
-python:
-  - "3.6"
-  - "3.7"
-  - "3.8"
 
-matrix:
+jobs:
   include:
-    - os: linux
-    - os: osx
+    - name: "Linux"
+      python:
+        - 3.6
+        - 3.7
+        - 3.8
+    - name: "macOS"
+      os: osx
+      osx_image: xcode11.2
+      language: minimal
 
 before_install:
   - python --version
