@@ -1,11 +1,9 @@
-from skbuild import setup
-from setuptools import find_packages
+from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-# Get the long description from the README file
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
@@ -13,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 def main():
     setup(
         name='llckbdm',  
-        version='v0.1.2',
+        version='v0.2.0',
         description='Krylov Basis Diagonalization Method implementation in Python', 
         long_description=long_description,  
         long_description_content_type='text/markdown',
@@ -33,10 +31,10 @@ def main():
         license='MIT',
         python_requires='>=3.6',
 
-        install_requires=['cython', 'numpy', 'scipy', 'pandas', 'sklearn', 'hdbscan'],
+        install_requires=['numpy', 'scipy', 'pandas', 'sklearn', 'hdbscan'],
 
         setup_requires=["pytest-runner"],
-        tests_require=["pytest", "pytest-cov", "codecov"],
+        tests_require=["pytest", "pytest-cov", "codecov", "pytest-catchlog"],
 
         data_files=[
             ('data', ['data/params_brain_sim_1_5T.csv'])
