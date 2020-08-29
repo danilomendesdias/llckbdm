@@ -1,3 +1,4 @@
+[![PyPI version](https://badge.fury.io/py/llckbdm.svg)](https://badge.fury.io/py/llckbdm)
 [![Build Status](https://travis-ci.com/danilomendesdias/llckbdm.svg?token=k6Bj4q2Uy7XrcNrLebfL&branch=master)](https://travis-ci.com/danilomendesdias/llckbdm)
 [![Build Status](https://dev.azure.com/danilomendesdias/LLC-KBDM/_apis/build/status/danilomendesdias.llckbdm?branchName=master)](https://dev.azure.com/danilomendesdias/LLC-KBDM/_build/latest?definitionId=4?branchName=master)
 [![codecov](https://codecov.io/gh/danilomendesdias/llckbdm/branch/master/graph/badge.svg?token=eOpnwCvmIt)](https://codecov.io/gh/danilomendesdias/llckbdm)
