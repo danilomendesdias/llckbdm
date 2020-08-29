@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 def main():
     setup(
         name='llckbdm',  
-        version='0.2.1',
+        version='0.2.2',
         description='Line List Clustering Krylov Basis Diagonalization Method implementation in Python',
         long_description=long_description,  
         long_description_content_type='text/markdown',
