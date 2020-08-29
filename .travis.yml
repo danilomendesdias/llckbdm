@@ -25,3 +25,4 @@ deploy:
   on:
     condition: $TRAVIS_PYTHON_VERSION == 3.8
     tags: true
+    branch: master
