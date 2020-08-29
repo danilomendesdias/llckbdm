@@ -1,6 +1,5 @@
-[![conda-forge](https://anaconda.org/conda-forge/llckbdm/badges/version.svg)](https://anaconda.org/conda-forge/llckbdm)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/llckbdm.svg)](https://anaconda.org/conda-forge/llckbdm)
 [![PyPI](https://badge.fury.io/py/llckbdm.svg)](https://pypi.org/project/llckbdm)
-
 [![Build Status](https://travis-ci.com/danilomendesdias/llckbdm.svg?token=k6Bj4q2Uy7XrcNrLebfL&branch=master)](https://travis-ci.com/danilomendesdias/llckbdm)
 [![Build Status](https://dev.azure.com/danilomendesdias/LLC-KBDM/_apis/build/status/danilomendesdias.llckbdm?branchName=master)](https://dev.azure.com/danilomendesdias/LLC-KBDM/_build/latest?definitionId=4?branchName=master)
 [![codecov](https://codecov.io/gh/danilomendesdias/llckbdm/branch/master/graph/badge.svg?token=eOpnwCvmIt)](https://codecov.io/gh/danilomendesdias/llckbdm)
