@@ -4,5 +4,3 @@ pandas>=0.24.2
 scikit-learn>=0.21.2
 attrs>=19.1.0
 hdbscan>=0.8.22
-matplotlib>=3.0.3
-pytest
