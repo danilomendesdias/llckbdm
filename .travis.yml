@@ -6,8 +6,7 @@ python:
 before_install:
 - python --version
 - pip install -U pip
-- pip install -U pytest
-- pip install codecov pytest-cov
+- pip install -r dev_requirements.txt
 install:
 - pip install -r requirements.txt
 - python setup.py install
