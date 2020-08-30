@@ -1,1 +1,2 @@
-requires = ["setuptools", "wheel", "scikit-build", "cmake", "ninja"]
+[build-system]
+requires = ["setuptools", "wheel"]
