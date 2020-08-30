@@ -1,6 +1,0 @@
-[submodule "third/eigen"]
-	path = third/eigen
-	url = https://github.com/eigenteam/eigen-git-mirror
-[submodule "third/pybind11"]
-	path = third/pybind11
-	url = https://github.com/pybind/pybind11
