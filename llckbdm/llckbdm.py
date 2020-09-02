@@ -82,6 +82,14 @@ def llc_kbdm(data, dwell, m_range, p=1, l=None, q=0.0):
         q=q,
     )
 
+    # stop in case KBDM can't generate more valid samples
+    if len(line_lists) == 0:
+        return LlcKbdmResult(
+            line_list=np.array([]),
+            rmse=None,
+            silhouette=np.array([]),
+        )
+
     # concatenate all sampled line lists into a single dataset
     samples = np.concatenate(line_lists)
 
